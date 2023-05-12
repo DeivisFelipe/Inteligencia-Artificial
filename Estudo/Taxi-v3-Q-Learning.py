@@ -119,8 +119,9 @@ elif method == 2:
 
 
     print("Treinamento finalizado.\n")
-    print("Timesteps tomados: {}".format(epochs)) # Total de passos
-    print("Penalidades recebidas: {}".format(penalties)) # Total de penalidades
+
+    #printa as 5 primeiras linhas da tabela Q
+    print(q_table[1:2])
 
     # Executa o ambiente com a tabela Q treinada, 100 vezes
     epochs = 0
