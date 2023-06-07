@@ -224,7 +224,7 @@ if __name__ == '__main__':
     numeroestado = 0
     print("Busca em profundidade")
     # Acessa o estado inicial
-    #acessa_estado_busca_profundidade(estado_inicial)
+    acessa_estado_busca_profundidade(estado_inicial)
 
     # Limpando as listas
     estados_visitados = []
