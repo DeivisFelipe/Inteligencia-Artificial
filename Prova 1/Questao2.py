@@ -32,9 +32,10 @@ execução dos algoritmos e das soluções do problema e (ii) código fonte das 
 nomeadas de forma compreensível, comentado - padrão JavaDoc ou Doxigen, e orientado a objetos.
 '''
 
+# Adiciona biblioteca de grafos
+import networkx as nx
+
 # cria a classe estado
-
-
 class Estado:
     # atributos
     voo = None
@@ -81,42 +82,34 @@ estados.append(Estado(7, 'c', 'h'))
 estados.append(Estado(8, 'c', 'i'))
 estados.append(Estado(9, 'd', 'j'))
 estados.append(Estado(10, 'e', 'k'))
+estados.append(Estado(11, 'e', 'l'))
+estados.append(Estado(12, 'g', 'm'))
+estados.append(Estado(13, 'j', 'n'))
+estados.append(Estado(14, 'j', 'o'))
+estados.append(Estado(15, 'k', 'f'))
+estados.append(Estado(16, 'l', 'h'))
+estados.append(Estado(17, 'm', 'd'))
+estados.append(Estado(18, 'o', 'a'))
+estados.append(Estado(19, 'n', 'b'))
 
 
-'''
-oper(11, e, l),
-oper(12, g, m),
-oper(13, j, n),
-oper(14, j, o),
-oper(15, k, f),
-oper(16, l, h),
-oper(17, m, d),
-oper(18, o, a),
-oper(19, n, b)
-'''
 
+# cidade inicial
+cidade_inicial = 'a'
 
-# Estado inicial
-estado_inicial = Estado('e', 'e', 'e', 'e')
+# Cidade final
+cidade_final = 'j'
 
-# Estado final
-estado_final = Estado('d', 'd', 'd', 'd')
-
-# Lista de todos os estados já visitados
-estados_visitados = []
+# Lista de cidade visitadas
+cidades_visitadas = []
 
 # Lista de todos os estados que ainda não foram visitados
 estados_nao_visitados = []
-
-# Verifica se terminou
-terminou = False
 
 # Estado acessado número de forma global
 numeroestado = 0
 
 # acessa o estado
-
-
 def acessa_estado_busca_profundidade(estado):
     global numeroestado
     # incrementa o numero de estados acessados de forma global
@@ -125,13 +118,13 @@ def acessa_estado_busca_profundidade(estado):
     estado.printaEstado(numeroestado)
 
     # verifica se o estado é o estado final
-    if estado == estado_final:
+    if estado.cidade2 == cida:
         # termina o programa
         terminou = True
         return estado
 
     # adiciona o estado na lista de estados visitados
-    estados_visitados.append(estado)
+    cidades_visitadas.append(estado.cidade2)
 
     # Gera todos os estados possíveis a partir do estado atual
     estados_possiveis = gera_estados_possiveis(estado)
@@ -165,28 +158,12 @@ def gera_estados_possiveis(estado):
     # Lista de estados possíveis
     estados_possiveis = []
 
-    # Verifica se o fazendeiro está na margem esquerda
-    estado1 = Estado('d' if estado.fazendeiro == 'e' else 'e',
-                     estado.lobo, estado.ovelha, estado.repolho)
-
-    estado2 = Estado('d' if estado.fazendeiro == 'e' else 'e',
-                     'd' if estado.lobo == 'e' else 'e', estado.ovelha, estado.repolho)
-
-    estado3 = Estado('d' if estado.fazendeiro == 'e' else 'e', estado.lobo,
-                     'd' if estado.ovelha == 'e' else 'e', estado.repolho)
-
-    estado4 = Estado('d' if estado.fazendeiro == 'e' else 'e', estado.lobo,
-                     estado.ovelha, 'd' if estado.repolho == 'e' else 'e')
-
-    # verifica se não é um estado visitado e se é um estado valido
-    if not verifica_estado_visitado_ou_nao_visitado(estado1) and estado1.verificaValido():
-        estados_possiveis.append(estado1)
-    if not verifica_estado_visitado_ou_nao_visitado(estado2) and estado2.verificaValido():
-        estados_possiveis.append(estado2)
-    if not verifica_estado_visitado_ou_nao_visitado(estado3) and estado3.verificaValido():
-        estados_possiveis.append(estado3)
-    if not verifica_estado_visitado_ou_nao_visitado(estado4) and estado4.verificaValido():
-        estados_possiveis.append(estado4)
+    # Percorre todos os estados e seleciona os estados que tem a cidade1 igual a cidade2 do estado atual
+    for estadoPossivel in estados:
+        if estadoPossivel.cidade1 == estado.cidade2:
+            # verifica se o estado já foi visitado
+            if not verifica_estado_visitado_ou_nao_visitado(estadoPossivel):
+                estados_possiveis.append(estadoPossivel)
 
     return estados_possiveis
 
@@ -194,8 +171,8 @@ def gera_estados_possiveis(estado):
 
 
 def verifica_estado_visitado_ou_nao_visitado(estado):
-    for estadoVisitado in estados_visitados:
-        if estado == estadoVisitado:
+    for cidadeVisitada in estados_visitados:
+        if estado.cidade2 == cidadeVisitada:
             return True
 
     for estadoNaoVisitado in estados_nao_visitados:
