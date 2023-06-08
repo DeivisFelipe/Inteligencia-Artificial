@@ -32,6 +32,9 @@ execução dos algoritmos e das soluções do problema e (ii) código fonte das 
 nomeadas de forma compreensível, comentado - padrão JavaDoc ou Doxigen, e orientado a objetos.
 '''
 
+# Adiciona biblioteca de grafos
+import networkx as nx
+
 # cria a classe estado
 
 
