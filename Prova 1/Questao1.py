@@ -97,9 +97,6 @@ estados_visitados = []
 # Lista de todos os estados que ainda não foram visitados
 estados_nao_visitados = []
 
-# Verifica se terminou
-terminou = False
-
 # Estado acessado número de forma global
 numeroestado = 0
 
@@ -113,8 +110,6 @@ def acessa_estado_busca_profundidade(estado):
 
     # verifica se o estado é o estado final
     if estado == estado_final:
-        # termina o programa
-        terminou = True
         return estado
 
     # adiciona o estado na lista de estados visitados
@@ -191,8 +186,6 @@ def acessa_estado_busca_largura(estado):
 
     # verifica se o estado é o estado final
     if estado == estado_final:
-        # termina o programa
-        terminou = True
         return estado
 
     # adiciona o estado na lista de estados visitados

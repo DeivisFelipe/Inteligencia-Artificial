@@ -41,6 +41,7 @@ class Estado:
     voo = None
     cidade1 = None
     cidade2 = None
+    pai = None
 
     # construtor
     def __init__(self, voo, cidade1, cidade2):
@@ -49,8 +50,11 @@ class Estado:
         self.cidade2 = cidade2
 
     def printaEstado(self, numeroestado):
-        print("oper( " + self.voo + ", " + self.cidade1 + ", " +
-              self.cidade2 + ") = Número: " + numeroestado)
+        print("oper( " + str(self.voo) + ", " + self.cidade1 + ", " +
+            self.cidade2 + ") = Numero: " + str(numeroestado))
+        
+    def addPai(self, pai):
+        self.pai = pai
 
     # verifica se o estado é igual
     def __eq__(self, other):
@@ -93,7 +97,6 @@ estados.append(Estado(18, 'o', 'a'))
 estados.append(Estado(19, 'n', 'b'))
 
 
-
 # cidade inicial
 cidade_inicial = 'a'
 
@@ -107,53 +110,39 @@ cidades_visitadas = []
 estados_nao_visitados = []
 
 # Estado acessado número de forma global
-numeroestado = 0
+numeroestado = 1
+
+def abreno(no):
+    for estado in estados:
+        if estado.cidade1 == no and estado.cidade2 not in cidades_visitadas:
+            estado.addPai(no)
+            estados_nao_visitados.append(estado)
+            
+    cidades_visitadas.append(no)
 
 # acessa o estado
-def acessa_estado_busca_profundidade(estado):
+def acessa_estado_busca_profundidade(cidade):
     global numeroestado
-    # incrementa o numero de estados acessados de forma global
-    numeroestado += 1
-    # printa o estado final
-    estado.printaEstado(numeroestado)
-
-    # verifica se o estado é o estado final
-    if estado.cidade2 == cida:
-        # termina o programa
-        terminou = True
-        return estado
-
-    # adiciona o estado na lista de estados visitados
-    cidades_visitadas.append(estado.cidade2)
-
-    # Gera todos os estados possíveis a partir do estado atual
-    estados_possiveis = gera_estados_possiveis(estado)
-
-    # Inverte a lista de estados possíveis
-    estados_possiveis.reverse()
-
-    # adiciona os estados possíveis na lista de estados não visitados
-    for estadoNovo in estados_possiveis:
-        estados_nao_visitados.append(estadoNovo)
-
-    # Enquanto tiver tiver estados posiíveis, vai dando pop e acessando os estados
+    if(verifica_fim(cidade)):
+        return
+    abreno(cidade)
     while len(estados_nao_visitados) > 0:
-        # Pega o primeiro estado da lista de estados não visitados
-        estadoRetirado = estados_nao_visitados.pop(
-            len(estados_nao_visitados) - 1)
+        nonovo = estados_nao_visitados.pop(-1)
+        if nonovo.cidade2 not in cidades_visitadas:
+            numeroestado += 1
+            nonovo.printaEstado(numeroestado)
+            abreno(nonovo.cidade2)
+            if(verifica_fim(nonovo.cidade2)):
+                return
 
-        # Acessa o estado
-        resposta = acessa_estado_busca_profundidade(estadoRetirado)
-
-        # verifica se reposta é um estado ou null
-        if resposta is not None:
-            return resposta
-
-    return None
+def verifica_fim(cidade):
+    global cidade_final
+    if cidade == cidade_final:
+        print("Cidade final encontrada")
+        return True
+    return False
 
 # Gera todos os estados possíveis a partir do estado atual
-
-
 def gera_estados_possiveis(estado):
     # Lista de estados possíveis
     estados_possiveis = []
@@ -168,57 +157,29 @@ def gera_estados_possiveis(estado):
     return estados_possiveis
 
 # Verifica se o estado esta dentro de estados visitados
-
-
 def verifica_estado_visitado_ou_nao_visitado(estado):
     for cidadeVisitada in estados_visitados:
         if estado.cidade2 == cidadeVisitada:
             return True
-
     for estadoNaoVisitado in estados_nao_visitados:
         if estado == estadoNaoVisitado:
             return True
-
     return False
 
 # Busca em Largura
-
-
-def acessa_estado_busca_largura(estado):
+def acessa_estado_busca_largura(cidade):
     global numeroestado
-    numeroestado += 1
-    # printa o estado final
-    estado.printaEstado(numeroestado)
-
-    # verifica se o estado é o estado final
-    if estado == estado_final:
-        # termina o programa
-        terminou = True
-        return estado
-
-    # adiciona o estado na lista de estados visitados
-    estados_visitados.append(estado)
-
-    # Gera todos os estados possíveis a partir do estado atual
-    estados_possiveis = gera_estados_possiveis(estado)
-
-    # adiciona os estados possíveis na lista de estados não visitados
-    for estadoNovo in estados_possiveis:
-        estados_nao_visitados.append(estadoNovo)
-
-    # Enquanto tiver tiver estados posiíveis, vai dando pop e acessando os estados
+    if(verifica_fim(cidade)):
+        return
+    abreno(cidade)
     while len(estados_nao_visitados) > 0:
-        # Pega o primeiro estado da lista de estados não visitados
-        estadoRetirado = estados_nao_visitados.pop(0)
-
-        # Acessa o estado
-        resposta = acessa_estado_busca_largura(estadoRetirado)
-
-        # verifica se reposta é um estado ou null
-        if resposta is not None:
-            return resposta
-
-    return None
+        nonovo = estados_nao_visitados.pop(0)
+        if nonovo.cidade2 not in cidades_visitadas:
+            numeroestado += 1
+            nonovo.printaEstado(numeroestado)
+            abreno(nonovo.cidade2)
+            if(verifica_fim(nonovo.cidade2)):
+                return
 
 
 # Inicia o programa
@@ -226,10 +187,10 @@ if __name__ == '__main__':
     numeroestado = 0
     print("Busca em profundidade")
     # Acessa o estado inicial
-    acessa_estado_busca_profundidade(estado_inicial)
+    acessa_estado_busca_profundidade(cidade_inicial)
 
     # Limpando as listas
-    estados_visitados = []
+    cidades_visitadas = []
     estados_nao_visitados = []
 
     # Zerando o estado acessado
@@ -237,4 +198,4 @@ if __name__ == '__main__':
 
     print("Busca em largura")
     # Acessa o estado inicial
-    acessa_estado_busca_largura(estado_inicial)
+    acessa_estado_busca_largura(cidade_inicial)
