@@ -1,5 +1,5 @@
 '''
-Descrição da questõa
+Descrição da questão
 
 (Exerc. 2) Considere os seguintes operadores que descrevem os vôos existentes entre cidades de um país:
 oper(1, a, b), 

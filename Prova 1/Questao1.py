@@ -1,5 +1,5 @@
 '''
-Descrição da questõa
+Descrição da questão
 
 (Exerc. 01) O Problema do Fazendeiro consiste no seguinte:
 Um fazendeiro encontra-se na margem esquerda de um rio, levando consigo um lobo, uma ovelha e um repolho. O
