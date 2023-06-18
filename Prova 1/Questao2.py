@@ -36,6 +36,8 @@ nomeadas de forma compreensível, comentado - padrão JavaDoc ou Doxigen, e orie
 import networkx as nx
 
 # cria a classe estado
+
+
 class Estado:
     # atributos
     voo = None
@@ -103,10 +105,10 @@ cidade_inicial = 'a'
 # Cidade final
 cidade_final = 'j'
 
-# Lista de cidade visitadas
+# Cidades visitadas
 cidades_visitadas = []
 
-# Lista de todos os estados que ainda não foram visitados
+# Pilha de estados
 estados_nao_visitados = []
 
 # Estado acessado número de forma global
@@ -140,30 +142,6 @@ def verifica_fim(cidade):
     if cidade == cidade_final:
         print("Cidade final encontrada")
         return True
-    return False
-
-# Gera todos os estados possíveis a partir do estado atual
-def gera_estados_possiveis(estado):
-    # Lista de estados possíveis
-    estados_possiveis = []
-
-    # Percorre todos os estados e seleciona os estados que tem a cidade1 igual a cidade2 do estado atual
-    for estadoPossivel in estados:
-        if estadoPossivel.cidade1 == estado.cidade2:
-            # verifica se o estado já foi visitado
-            if not verifica_estado_visitado_ou_nao_visitado(estadoPossivel):
-                estados_possiveis.append(estadoPossivel)
-
-    return estados_possiveis
-
-# Verifica se o estado esta dentro de estados visitados
-def verifica_estado_visitado_ou_nao_visitado(estado):
-    for cidadeVisitada in estados_visitados:
-        if estado.cidade2 == cidadeVisitada:
-            return True
-    for estadoNaoVisitado in estados_nao_visitados:
-        if estado == estadoNaoVisitado:
-            return True
     return False
 
 # Busca em Largura
