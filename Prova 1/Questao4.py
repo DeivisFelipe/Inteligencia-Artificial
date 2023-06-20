@@ -268,4 +268,3 @@ estado_final = busca(estado_inicial, estado_final)
 print("------------------  Estados abertos  ------------------")
 for estado in estados_abertos:
     estado.printaEstado(0)
-    

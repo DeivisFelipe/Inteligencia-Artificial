@@ -13,12 +13,7 @@ profundidade podem encontrar soluções de custo superior àquele encontrada pel
 melhor escolha, quando s0 = a e G = [h]
 '''
 
-# Adiciona biblioteca de grafos
-import networkx as nx
-
 # cria a classe estado
-
-
 class Estado:
     # atributos
     voo = None
