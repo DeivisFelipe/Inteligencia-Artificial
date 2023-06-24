@@ -10,7 +10,7 @@ width = 600
 height = 600
 
 # Cria um estado inicial com matriz zerada
-tamanho = 6
+tamanho = 8
 estado = Estado(tamanho, np.zeros((tamanho, tamanho)), width, height)
 
 
@@ -26,11 +26,6 @@ def draw():
     global estado
     # Desenha o estado inicial
     estado.desenha()
-
-    # Desenha uma bolinha vermelho no meio do tabuleiro
-    fill(255, 0, 0)
-    stroke_weight(0)
-    circle((width/2, height/2), 20)
 
 
 # Roda o p5
