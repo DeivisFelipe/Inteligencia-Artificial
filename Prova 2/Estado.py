@@ -19,6 +19,9 @@ class Estado:
     inicioY = None
     fimY = None
 
+    # Vencedor do jogo
+    vencedor = 0
+
     def __init__(self, size, matriz, width, height):
         self.matriz = matriz
         self.size = size
@@ -47,7 +50,7 @@ class Estado:
 
     # Função que desenha o estado
     def desenha(self):
-        fill(0, 0, 0)
+        stroke(0)
         stroke_weight(self.borda)
         for i in range(0, self.size - 1):
             # Desenha linhas horizontais
@@ -58,10 +61,35 @@ class Estado:
                  (self.fimX + self.espessura, self.inicioY + i * self.espessura))
 
         # Desenha uma bolinha azul de raio 2 em cada centro de celula
+        stroke(0, 0, 255)
+        stroke_weight(1)
         fill(0, 0, 255)
-        stroke_weight(0)
         for i in range(0, len(self.centros_celulas)):
-            circle(self.centros_celulas[i], 2)
+            circle(self.centros_celulas[i], 1)
+
+        # Desenha as bolinhas e xis
+        for i in range(0, self.size):
+            for j in range(0, self.size):
+                if (self.matriz[i][j] == 1):
+                    self.desenhaX(i, j)
+                elif (self.matriz[i][j] == 2):
+                    self.desenhaO(i, j)
+
+    # Desenha um xis na celula i, j
+    def desenhaX(self, i, j):
+        stroke_weight(5)
+        stroke(255, 0, 0)
+        line((self.centros_celulas[i * self.size + j][0] - self.espessura/4, self.centros_celulas[i * self.size + j][1] - self.espessura/4),
+             (self.centros_celulas[i * self.size + j][0] + self.espessura/4, self.centros_celulas[i * self.size + j][1] + self.espessura/4))
+        line((self.centros_celulas[i * self.size + j][0] + self.espessura/4, self.centros_celulas[i * self.size + j][1] - self.espessura/4),
+             (self.centros_celulas[i * self.size + j][0] - self.espessura/4, self.centros_celulas[i * self.size + j][1] + self.espessura/4))
+
+    # Desenha um circulo na celula i, j. Sem preenchimento
+    def desenhaO(self, i, j):
+        stroke_weight(5)
+        stroke(0, 255, 0)
+        no_fill()
+        circle(self.centros_celulas[i * self.size + j], self.espessura/2)
 
     # Verifica o fim do jogo
     def fim(self):
