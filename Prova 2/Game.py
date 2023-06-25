@@ -10,7 +10,7 @@ width = 600
 height = 600
 
 # Cria um estado inicial com matriz zerada
-tamanho = 3
+tamanho = 6
 estado = Estado(tamanho, np.zeros((tamanho, tamanho)), width, height)
 
 
@@ -25,7 +25,9 @@ def setup():
     textAlign(CENTER, CENTER)  # Centraliza o texto horizontal e verticalmente
 
 
-coutner = 0
+counter = 0
+profundidadeMaxima = 0
+pilha = []
 
 # Função de desenho do p5
 
@@ -82,8 +84,15 @@ def key_pressed():
 
 def melhor_jogada():
     global estado
+    global counter
+    global profundidadeMaxima
+    global pilha
+    pilha = []
+    profundidadeMaxima = 3
+    counter = 0
     melhor_pontuacao = math.inf
     melhor_jogada_estado = None
+    print("##################################################")
     for estado_novo in estado.estados_possiveis():
         pontuacao = minimax(estado_novo, True, 0)
 
@@ -91,10 +100,22 @@ def melhor_jogada():
             melhor_pontuacao = pontuacao
             melhor_jogada_estado = estado_novo
 
+    print("Jogadas analisadas: " + str(counter))
+
     estado = melhor_jogada_estado
 
 
-def minimax(estadoMinMax, maximizando, profundidade=0):
+def minimax(estadoMinMax, maximizando, profundidade=0, alpha=-math.inf, beta=math.inf):
+    global profundidadeMaxima
+    global counter
+    if (counter > 4000):
+        print("Profundidade: " + str(profundidadeMaxima))
+        return 0
+    if (profundidade == profundidadeMaxima):
+        if (counter < 4000):
+            profundidadeMaxima += 1
+        else:
+            return 0
     if (estadoMinMax.fim()):
         if (estadoMinMax.empate):
             return 0
@@ -120,12 +141,20 @@ def minimax(estadoMinMax, maximizando, profundidade=0):
                 return multiplicador * 2
             else:
                 return multiplicador
+    counter += 1
 
     pontucaoes = []
 
     for estado_novo in estadoMinMax.estados_possiveis():
-        pontucaoes.append(
-            minimax(estado_novo, not maximizando, profundidade + 1))
+        pontuacao = minimax(estado_novo, not maximizando,
+                            profundidade + 1, alpha, beta)
+        pontucaoes.append(pontuacao)
+        if maximizando:
+            alpha = max(alpha, pontuacao)
+        else:
+            beta = min(beta, pontuacao)
+        if beta <= alpha:
+            break
 
     if (maximizando):
         return max(pontucaoes)
