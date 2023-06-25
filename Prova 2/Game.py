@@ -10,7 +10,7 @@ width = 600
 height = 600
 
 # Cria um estado inicial com matriz zerada
-tamanho = 3
+tamanho = 6
 estado = Estado(tamanho, np.zeros((tamanho, tamanho)), width, height)
 
 
@@ -20,7 +20,7 @@ def setup():
     # Titulo da janela
     title("Jogo da Velha MinMax - Deivis Felipe")
 
-    f = create_font("arial.ttf", 16,)  # Arial, 16 point, anti-aliasing on
+    f = create_font("arial.ttf", 30,)  # Arial, 16 point, anti-aliasing on
     text_font(f)  # Set the font to "f"
     textAlign(CENTER, CENTER)  # Centraliza o texto horizontal e verticalmente
 

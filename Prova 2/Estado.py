@@ -35,12 +35,12 @@ class Estado:
         self.inicioX = self.width / 2 - (self.espessura * (self.size // 2 - 1))
         if (self.size % 2 == 1):
             self.inicioX -= self.espessura/2
-        self.fimX = self.width / 2 + (self.espessura * (self.size // 2 - 1))
+        self.fimX = self.inicioX + (self.espessura * (self.size - 2))
         self.inicioY = self.height / 2 - \
             (self.espessura * (self.size // 2 - 1))
         if (self.size % 2 == 1):
             self.inicioY -= self.espessura/2
-        self.fimY = self.height / 2 + (self.espessura * (self.size // 2 - 1))
+        self.fimY = self.inicioY + (self.espessura * (self.size - 2))
 
         # Define os centros das celulas
         for i in range(0, self.size):
