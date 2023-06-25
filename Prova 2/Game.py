@@ -18,7 +18,7 @@ def setup():
     size(width, height)
     background(204)
     # Titulo da janela
-    title("Jogo da Velha MinMax - Deivis Felipe")
+    title("Jogo da Velha MiniMax - Deivis Felipe")
 
     f = create_font("arial.ttf", 30,)  # Arial, 16 point, anti-aliasing on
     text_font(f)  # Set the font to "f"
@@ -71,7 +71,6 @@ def mouse_pressed():
 
 
 def key_pressed():
-    print(key)
     # se clicar em r, reseta o jogo
     if (key == "r"):
         global estado
