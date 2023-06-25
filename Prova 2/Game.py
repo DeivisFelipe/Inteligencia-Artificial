@@ -26,8 +26,9 @@ def setup():
 
 
 counter = 0
-profundidadeMaxima = 0
+profundidadeMaxima = 2
 pilha = []
+jogadas = 0
 
 # Função de desenho do p5
 
@@ -43,6 +44,7 @@ def draw():
 
 
 def mouse_pressed():
+    global jogadas
     # Pega a posição do mouse
     x = mouse_x
     y = mouse_y
@@ -59,13 +61,14 @@ def mouse_pressed():
                     if (estado.fim()):
                         return
                     estado.jogador = 2
+                    jogadas += 1
 
                     melhor_jogada()
 
                     if (estado.fim()):
                         return
-
                     estado.jogador = 1
+                    jogadas += 1
 
                 break
 
@@ -86,9 +89,7 @@ def melhor_jogada():
     global estado
     global counter
     global profundidadeMaxima
-    global pilha
-    pilha = []
-    profundidadeMaxima = 3
+    global jogadas
     counter = 0
     melhor_pontuacao = math.inf
     melhor_jogada_estado = None
@@ -100,6 +101,9 @@ def melhor_jogada():
             melhor_pontuacao = pontuacao
             melhor_jogada_estado = estado_novo
 
+    if jogadas >= 10:
+        profundidadeMaxima += 1
+        jogadas = 0
     print("Jogadas analisadas: " + str(counter))
 
     estado = melhor_jogada_estado
@@ -108,14 +112,8 @@ def melhor_jogada():
 def minimax(estadoMinMax, maximizando, profundidade=0, alpha=-math.inf, beta=math.inf):
     global profundidadeMaxima
     global counter
-    if (counter > 4000):
-        print("Profundidade: " + str(profundidadeMaxima))
+    if (profundidade > profundidadeMaxima):
         return 0
-    if (profundidade == profundidadeMaxima):
-        if (counter < 4000):
-            profundidadeMaxima += 1
-        else:
-            return 0
     if (estadoMinMax.fim()):
         if (estadoMinMax.empate):
             return 0

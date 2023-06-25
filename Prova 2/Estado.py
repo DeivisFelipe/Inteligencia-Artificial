@@ -204,6 +204,7 @@ class Estado:
                     estados.append(novo_estado)
         return estados
 
+    # Pontu
     # string
     def __str__(self):
         return "Estado: \n" + str(self.matriz) + "\nJogador: " + str(self.jogador) + "\nVencedor: " + str(self.vencedor) + "\nEmpate: " + str(self.empate)
