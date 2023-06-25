@@ -50,6 +50,16 @@ class Estado:
 
     # Função que desenha o estado
     def desenha(self):
+        # Verifica se o jogo acabou
+        if (self.vencedor != 0):
+            no_stroke()
+            # Escreve o vencedor
+            if (self.vencedor == 1):
+                fill(255, 0, 0)
+                text("Vencedor: X", (self.width / 2, 40))
+            else:
+                fill(0, 255, 0)
+                text("Vencedor: O", (self.width / 2, 40))
         stroke(0)
         stroke_weight(self.borda)
         for i in range(0, self.size - 1):
@@ -102,13 +112,12 @@ class Estado:
 
     # Verifica o fim do jogo para 3 em linha
     def fim3(self):
-        # Verifica se alguma linha tem 3 em linha
         for i in range(0, self.size):
+            # Verifica se alguma linha tem 3 em linha
             if (self.matriz[i][0] == self.matriz[i][1] and self.matriz[i][1] == self.matriz[i][2] and self.matriz[i][0] != 0):
                 return True
 
-        # Verifica se alguma coluna tem 3 em linha
-        for i in range(0, self.size):
+            # Verifica se alguma coluna tem 3 em linha
             if (self.matriz[0][i] == self.matriz[1][i] and self.matriz[1][i] == self.matriz[2][i] and self.matriz[0][i] != 0):
                 return True
 
@@ -123,15 +132,13 @@ class Estado:
 
     # Verifica o fim do jogo para 4 em linha
     def fim4(self):
-        # Verifica se alguma linha tem 4 em linha
         for i in range(0, self.size):
             for j in range(0, self.size - 3):
+                # Verifica se alguma linha tem 4 em linha
                 if (self.matriz[i][j] == self.matriz[i][j + 1] and self.matriz[i][j + 1] == self.matriz[i][j + 2] and self.matriz[i][j + 2] == self.matriz[i][j + 3] and self.matriz[i][j] != 0):
                     return True
 
-        # Verifica se alguma coluna tem 4 em linha
-        for i in range(0, self.size):
-            for j in range(0, self.size - 3):
+                # Verifica se alguma coluna tem 4 em linha
                 if (self.matriz[j][i] == self.matriz[j + 1][i] and self.matriz[j + 1][i] == self.matriz[j + 2][i] and self.matriz[j + 2][i] == self.matriz[j + 3][i] and self.matriz[j][i] != 0):
                     return True
 
