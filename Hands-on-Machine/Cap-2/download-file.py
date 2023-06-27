@@ -1,6 +1,7 @@
 import tarfile
 import urllib.request
 import os
+import pandas as pd
 
 DOENLOAD_ROOT = "https://raw.githubusercontent.com/ageron/handson-ml2/master/"
 HOUSING_PATH = os.path.join("datasets", "housing")
