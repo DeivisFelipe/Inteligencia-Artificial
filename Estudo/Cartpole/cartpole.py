@@ -5,8 +5,6 @@ import numpy as np
 env = gym.make("CartPole-v1", render_mode="human") # Criando um ambiente do CartPole-v1 e 
 #salvando os frames em um array RGB
 
-
-
 def play_one_step(env, obs, model, loss_fn):
     with tf.GradientTape() as tape:  # Define um contexto para calcular gradientes
         left_proba = model(obs[np.newaxis])  # Calcula a probabilidade de ação "esquerda"

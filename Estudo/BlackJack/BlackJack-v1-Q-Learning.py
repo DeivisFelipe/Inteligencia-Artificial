@@ -15,7 +15,7 @@ print("Total de Estados {}".format(states_space))
 
 # Tabela Q, verifica se existe uma tabela Q salva no computador
 try:
-    q_table = np.load("q_table_blackjack.npy")
+    q_table = np.load("./Estudo/Taxi/q_table_blackjack.npy")
     print("Carregando tabela Q")
 except:
     q_table = np.zeros([32, 11, 2, 2])
@@ -29,7 +29,7 @@ if train:
     alpha = 0.1 # Taxa de aprendizado
     gamma = 0.6 # Fator de desconto
     epsion = 0.1 # Taxa de exploração
-    gerations = 100000001 # Total de gerações de treinamento
+    gerations = 1000 # Total de gerações de treinamento
 
     for i in range(1, gerations):
         # Total de ações, recompensas, penalidades recebidas durando a aprendizagem
@@ -45,7 +45,7 @@ if train:
 
         # Salva o q-table de forma definitiva no computador
         if i % 100000 == 0:
-            np.save("q_table_blackjack.npy", q_table)
+            np.save("./Estudo/Taxi/q_table_blackjack.npy", q_table)
             print("Salvando tabela Q")
             time.sleep(1)
 

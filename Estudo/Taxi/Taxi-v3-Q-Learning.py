@@ -58,7 +58,7 @@ elif method == 2:
     # Inicializa a tabela de valores Q
     # verifica se existe uma tabela Q salva no computador
     try:
-        q_table = np.load("q_table.npy")
+        q_table = np.load("./Estudo/Taxi/q_table.npy")
         print("Carregando tabela Q")
     except:
         print("Criando tabela Q")
@@ -77,7 +77,7 @@ elif method == 2:
     epochs = 0
     penalties = 0
 
-    for i in range(1, 1): # 100000 versoões de treinamento
+    for i in range(1, 20000): # 100000 versoões de treinamento
         state = env.reset() # incialização aleatória do ambiente
         state = state[0]
         done = False
@@ -86,7 +86,7 @@ elif method == 2:
         epsodies = 0
 
         # Salva o q-table de forma definitiva no computador
-        if i % 100000 == 0:
+        if i % 1000 == 0:
             np.save("q_table.npy", q_table)
             print("Salvando tabela Q")
             time.sleep(1)
