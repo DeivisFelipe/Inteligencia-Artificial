@@ -10,9 +10,30 @@ width = 600
 height = 600
 
 # Cria um estado inicial com matriz zerada
-tamanho = 6
-estado = Estado(tamanho, np.zeros((tamanho, tamanho)), width, height)
+tamanho = 3
 
+estado = Estado(tamanho, np.zeros((tamanho, tamanho)), width, height)
+if(tamanho == 6) :
+    estado.jogador = 1
+    estadoAnterior = None
+    # Preence o estado inicial com com 30 jogadas aleatorias que não seja um jogo finalizado
+    for i in range(0, 25):
+        estados_possiveis = estado.estados_possiveis()
+        # Remove todos os estados que são finais
+        # aplica um filtro para remover os estados finais
+        estados_possiveis = list(
+            filter(lambda estado: not estado.fim(), estados_possiveis))
+        # Se não tiver mais estados possiveis, sai do loop
+        if (len(estados_possiveis) == 0):
+            estado = estadoAnterior
+            break
+        estadoTemp = estados_possiveis[np.random.randint(0, len(estados_possiveis))]
+
+        if (estadoTemp.jogador == 2):
+            estadoAnterior = estado
+        estado = estadoTemp
+    estado = estadoAnterior
+    print(estado.jogador, estado.fim())
 
 def setup():
     size(width, height)
@@ -26,7 +47,6 @@ def setup():
 
 
 counter = 0
-profundidadeMaxima = 2
 pilha = []
 jogadas = 0
 
@@ -79,8 +99,29 @@ def key_pressed():
     # se clicar em r, reseta o jogo
     if (key == "r"):
         global estado
+        global tamanho
         estado = Estado(tamanho, np.zeros((tamanho, tamanho)), width, height)
         estado.jogador = 1
+        if(tamanho == 6) :
+            estadoAnterior = None
+            # Preence o estado inicial com com 30 jogadas aleatorias que não seja um jogo finalizado
+            for i in range(0, 25):
+                estados_possiveis = estado.estados_possiveis()
+                # Remove todos os estados que são finais
+                # aplica um filtro para remover os estados finais
+                estados_possiveis = list(
+                    filter(lambda estado: not estado.fim(), estados_possiveis))
+                # Se não tiver mais estados possiveis, sai do loop
+                if (len(estados_possiveis) == 0):
+                    estado = estadoAnterior
+                    break
+                estadoTemp = estados_possiveis[np.random.randint(0, len(estados_possiveis))]
+
+                if (estadoTemp.jogador == 2):
+                    estadoAnterior = estado
+                estado = estadoTemp
+            estado = estadoAnterior
+            print(estado.jogador, estado.fim())
 
 # Algoritmo melhor jogada
 
@@ -88,12 +129,10 @@ def key_pressed():
 def melhor_jogada():
     global estado
     global counter
-    global profundidadeMaxima
     global jogadas
     counter = 0
     melhor_pontuacao = math.inf
     melhor_jogada_estado = None
-    print("##################################################")
     for estado_novo in estado.estados_possiveis():
         pontuacao = minimax(estado_novo, True, 0)
 
@@ -101,19 +140,13 @@ def melhor_jogada():
             melhor_pontuacao = pontuacao
             melhor_jogada_estado = estado_novo
 
-    if jogadas >= 10:
-        profundidadeMaxima += 1
-        jogadas = 0
     print("Jogadas analisadas: " + str(counter))
 
     estado = melhor_jogada_estado
 
 
 def minimax(estadoMinMax, maximizando, profundidade=0, alpha=-math.inf, beta=math.inf):
-    global profundidadeMaxima
     global counter
-    if (profundidade > profundidadeMaxima):
-        return 0
     if (estadoMinMax.fim()):
         if (estadoMinMax.empate):
             return 0

@@ -10,7 +10,6 @@ class Estado:
     borda = 10
     width = None
     height = None
-    jogador = 1
     centros_celulas = []
 
     # informação de print do tabuleiro
@@ -30,6 +29,7 @@ class Estado:
         self.size = size
         self.width = width
         self.height = height
+        self.jogador = 1
 
         # Com base no tamanho da matriz, define a espessura das linhas
         self.espessura = self.width / (self.size + 3)
