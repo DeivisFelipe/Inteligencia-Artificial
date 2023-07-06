@@ -10,7 +10,7 @@ width = 600
 height = 600
 
 # Cria um estado inicial com matriz zerada
-tamanho = 3
+tamanho = 6
 
 estado = Estado(tamanho, np.zeros((tamanho, tamanho)), width, height)
 if(tamanho == 6) :
