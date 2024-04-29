@@ -1,4 +1,4 @@
-import IP
+from Models.IP import IP
 import scapy.all as scapy
 
 class Fluxo:
@@ -49,6 +49,7 @@ class Fluxo:
         if self.handshake_complete:
             self.add_transaction(packet)
         else:
+            pass
 
 
     def __str__(self) -> str:

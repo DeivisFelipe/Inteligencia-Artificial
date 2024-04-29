@@ -1,5 +1,5 @@
 class IP:
-    def __init__(self, src, dst, total_length, protocol, version, ihl, ttl, id, flags, offset, checksum, ecn, dscp, options, timestamp=None):
+    def __init__(self, src, dst, total_length, protocol, version, ihl, ttl, id, flags, offset, checksum, tos, options, timestamp=None):
         self.src = src
         self.dst = dst
         self.total_length = total_length
@@ -11,8 +11,7 @@ class IP:
         self.flags = flags
         self.offset = offset
         self.checksum = checksum
-        self.ecn = ecn
-        self.dscp = dscp
+        self.tos = tos
         self.options = options
         self.timestamp = timestamp
 
@@ -25,4 +24,4 @@ class IP:
 
 
     def __str__(self):
-        return f"IP(src={self.src}, dst={self.dst}, total_length={self.total_length}, protocol={self.protocol}, version={self.version}, ihl={self.ihl}, ttl={self.ttl}, id={self.id}, flags={self.flags}, offset={self.offset}, checksum={self.checksum}, ecn={self.ecn}, dscp={self.dscp})"
+        return f"IP(src={self.src}, dst={self.dst}, total_length={self.total_length}, protocol={self.protocol}, version={self.version}, ihl={self.ihl}, ttl={self.ttl}, id={self.id}, flags={self.flags}, offset={self.offset}, checksum={self.checksum}, tos={self.tos})"
