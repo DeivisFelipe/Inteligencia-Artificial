@@ -3,10 +3,10 @@ import os
 import time
 
 PATH_TSHARK = "C:/Program Files/Wireshark/tshark.exe"
-PATH_PCAP = '.\\datasets\\pcaps\\pacotes.pcap'
-ARQUIVO_FLUXOS = "AvaliadorFluxo\\fluxos.txt"
-ARQUIVO_FLUXOS_ORDENADOS = "AvaliadorFluxo\\fluxos_ordenados.txt"
-ARQUIVO_SAIDA = "AvaliadorFluxo\\saida.txt"
+PATH_PCAP = 'teste.pcap'
+ARQUIVO_FLUXOS = "fluxos.txt"
+ARQUIVO_FLUXOS_ORDENADOS = "fluxos_ordenados.txt"
+ARQUIVO_SAIDA = "saida.txt"
 
 # Pesos de cada valor
 PESO_NSPACKGES = 1
@@ -21,7 +21,7 @@ PESO_DURATION = 1
 # Pontuação minima
 PONTUACAO_MINIMA = 7
 # Quantidade de fluxos que serão considerados
-QUANTIDADE_FLUXOS = 15
+QUANTIDADE_FLUXOS = 2
 # Tempo de vida de uma recorrencia
 TEMPO_VIDA = 100
 
