@@ -21,7 +21,7 @@ PESO_DURATION = 1
 # Pontuação minima
 PONTUACAO_MINIMA = 7
 # Quantidade de fluxos que serão considerados
-QUANTIDADE_FLUXOS = 2
+QUANTIDADE_FLUXOS = 100
 # Tempo de vida de uma recorrencia
 TEMPO_VIDA = 100
 
@@ -29,6 +29,11 @@ TEMPO_VIDA = 100
 PORCENTAGEM = 1
 
 def gera_fluxos():
+    """
+        Essa função é responsável por gerar os dados dos fluxos utilizando o tshark
+        Ele só pega os fluxos tcp do arquivo PCAP
+    """
+
     # Tempo de execução
     tempo_inicial = time.time()
     print("Gerando arquivo de fluxos...")
@@ -56,6 +61,9 @@ def gera_fluxos():
 
 class Fluxo:
     def __init__(self, src, sport, dst, dport, nspackges, sbytes, nrpackges, rbytes, ntpackges, tbytes, rtime, duration) -> None:
+        """
+            Essa classe representa um fluxo, com todas as suas informações
+        """
         self.src = src
         self.sport = sport
         self.dst = dst
@@ -70,24 +78,33 @@ class Fluxo:
         self.duration = duration
 
     def __str__(self) -> str:
-        # nspackges| sbytes| nrpackges| rbytes| ntpackges| tbytes| rtime| duration
+        # src| sport| dst| dport| nspackges| sbytes| nrpackges| rbytes| ntpackges| tbytes| rtime| duration
         # cada campo com 10 caracteres
-        return f"| {self.nspackges:10} | {self.sbytes:10} | {self.nrpackges:10} | {self.rbytes:10} | {self.ntpackges:10} | {self.tbytes:10} | {self.rtime:10.2f} | {self.duration:10.2f} |"
+        return f"| {self.src:15} | {self.sport:10} | {self.dst:15} | {self.dport:10} | {self.nspackges:10} | {self.sbytes:10} | {self.nrpackges:10} | {self.rbytes:10} | {self.ntpackges:10} | {self.tbytes:10} | {self.rtime:10.2f} | {self.duration:10.2f} |"
 
 class Recorrencia:
-    def __init__(self, fluxo: Fluxo) -> None:
+    def __init__(self, fluxo: Fluxo, chave: tuple) -> None:
+        """
+            Essa classe contêm os fluxos recorrentes, agrupando pela tupla
+        """
+        self.chave = chave
         self.src = fluxo.src
         self.dst = fluxo.dst
         self.sport = fluxo.sport
         self.dport = fluxo.dport
-        self.nspackges = fluxo.nspackges
-        self.sbytes = fluxo.sbytes
-        self.nrpackges = fluxo.nrpackges
-        self.rbytes = fluxo.rbytes
-        self.ntpackges = fluxo.ntpackges
-        self.tbytes = fluxo.tbytes
         self.rtime = fluxo.rtime
+
+        # Médias dos valores
+        self.npackges_media = fluxo.ntpackges
+        self.bytes_media = fluxo.tbytes
+        self.duration_media = fluxo.duration
+
+        # Totais
+        self.npackges = fluxo.ntpackges
+        self.bytes = fluxo.tbytes
         self.duration = fluxo.duration
+
+
         self.ocorrencias = 1
         self.pontuacao = 0
         self.fluxos = [fluxo]
@@ -95,16 +112,18 @@ class Recorrencia:
     def __str__(self) -> str:
         # Printa o cabeçalho da recorrencia
         recorrencia = "-" * 105 + "\n"
-        recorrencia += f"| Recorrencia: | {self.src}:{self.sport} -> {self.dst}:{self.dport:47} |\n"
+        recorrencia += f"| Chave:     | {self.chave:88} |\n"
         recorrencia += "-" * 105 + "\n"
         recorrencia += f"| Ocorrencias: {str(self.ocorrencias):88} |\n"
+        # recorrencia += "-" * 105 + "\n"
+        # recorrencia += f"| Pontuacao: {str(self.pontuacao):90} |\n"
         recorrencia += "-" * 105 + "\n"
-        recorrencia += f"| Pontuacao: {str(self.pontuacao):90} |\n"
+        recorrencia += "|" + " " * 22 + " Medias" + " " * 22 + "|" + " " * 22 + " Totais" + " " * 22 + "|\n"
         recorrencia += "-" * 105 + "\n"
-        recorrencia += "|  nspackges |     sbytes |  nrpackges |     rbytes |  ntpackges |     tbytes |      rtime |   duration |\n"
+        recorrencia += "|        npackges |         bytes  |       duration |        npackges |         bytes  |       duration |\n"
         recorrencia += "-" * 105 + "\n"
         # Printa só no maximo 2 casas decimais
-        recorrencia += f"| {self.nspackges:10.2f} | {self.sbytes:10.2f} | {self.nrpackges:10.2f} | {self.rbytes:10.2f} | {self.ntpackges:10.2f} | {self.tbytes:10.2f} | {self.rtime:10.2f} | {self.duration:10.2f} |\n"
+        recorrencia += f"| {self.npackges_media:15.2f} | {self.bytes_media:14.2f} | {self.duration_media:14.2f} | {self.npackges:15.2f} | {self.bytes:14.2f} | {self.duration:14.2f} |\n"
         recorrencia += "-" * 105 + "\n\n"
         
         # Divisa
@@ -113,13 +132,13 @@ class Recorrencia:
         # Printa todos os fluxos
         # Faz o cabeçalho dos fluxos
         fluxos = "\n"
-        fluxos += "-" * 105 + "\n"
-        fluxos += "|" + " " * 48 + " Fluxos" + " " * 48 + "|\n" 
-        fluxos += "-" * 105 + "\n"
-        fluxos += "|  nspackges |     sbytes |  nrpackges |     rbytes |  ntpackges |     tbytes |      rtime |   duration |\n"
-        fluxos += "-" * 105 + "\n"
+        fluxos += "-" * 167 + "\n"
+        fluxos += "|" + " " * 79 + " Fluxos" + " " * 79 + "|\n" 
+        fluxos += "-" * 167 + "\n"
+        fluxos += "|             src |      sport |             dst |      dport |  nspackges |     sbytes |  nrpackges |     rbytes |  ntpackges |     tbytes |      rtime |   duration |\n"
+        fluxos += "-" * 167 + "\n"
         fluxos += "\n".join([str(fluxo) for fluxo in self.fluxos])
-        fluxos += "\n" + "-" * 105 + "\n"
+        fluxos += "\n" + "-" * 167 + "\n"
         return recorrencia + divisa + fluxos
     
     def adiciona_fluxo(self, fluxo: Fluxo):
@@ -137,35 +156,72 @@ class Recorrencia:
 
     def recalcula_valores(self, fluxo: Fluxo):
         # Faz a média dos valores, considerando a quantidade de ocorrencias
-        soma_nspackges = self.nspackges * (self.ocorrencias) + fluxo.nspackges
-        self.nspackges = soma_nspackges / (self.ocorrencias + 1)
-        soma_sbytes = self.sbytes * (self.ocorrencias) + fluxo.sbytes
-        self.sbytes = soma_sbytes / (self.ocorrencias + 1)
-        soma_nrpackges = self.nrpackges * (self.ocorrencias) + fluxo.nrpackges
-        self.nrpackges = soma_nrpackges / (self.ocorrencias + 1)
-        soma_rbytes = self.rbytes * (self.ocorrencias) + fluxo.rbytes
-        self.rbytes = soma_rbytes / (self.ocorrencias + 1)
-        soma_ntpackges = self.ntpackges * (self.ocorrencias) + fluxo.ntpackges
-        self.ntpackges = soma_ntpackges / (self.ocorrencias + 1)
-        soma_tbytes = self.tbytes * (self.ocorrencias) + fluxo.tbytes
-        self.tbytes = soma_tbytes / (self.ocorrencias + 1)
-        soma_duration = self.duration * (self.ocorrencias) + fluxo.duration
-        self.duration = soma_duration / (self.ocorrencias + 1)
+        # soma_nspackges = self.nspackges * (self.ocorrencias) + fluxo.nspackges
+        # self.nspackges = soma_nspackges / (self.ocorrencias + 1)
+        # soma_sbytes = self.sbytes * (self.ocorrencias) + fluxo.sbytes
+        # self.sbytes = soma_sbytes / (self.ocorrencias + 1)
+        # soma_nrpackges = self.nrpackges * (self.ocorrencias) + fluxo.nrpackges
+        # self.nrpackges = soma_nrpackges / (self.ocorrencias + 1)
+        # soma_rbytes = self.rbytes * (self.ocorrencias) + fluxo.rbytes
+        # self.rbytes = soma_rbytes / (self.ocorrencias + 1)
+        soma_npackges_media = self.npackges_media * (self.ocorrencias) + fluxo.ntpackges
+        self.npackges_media = soma_npackges_media / (self.ocorrencias + 1)
+        soma_bytes_media = self.bytes_media * (self.ocorrencias) + fluxo.tbytes
+        self.bytes_media = soma_bytes_media / (self.ocorrencias + 1)
+        soma_duration_media = self.duration_media * (self.ocorrencias) + fluxo.duration
+        self.duration_media = soma_duration_media / (self.ocorrencias + 1)
+
+        # Soma os valores aos totais
+        self.npackges += fluxo.ntpackges
+        self.bytes += fluxo.tbytes
+        self.duration += fluxo.duration
 
 
 class AvaliadorFluxo:
     def __init__(self) -> None:
         self.recorrencias = {}
+        self.fluxos_simples_destino = {}
+        self.fluxos_simples_origem = {}
+
+    def remove_fluxos_simples(self, chave_origem, chave_destino):
+        if self.fluxos_simples_destino.get(chave_destino):
+            self.fluxos_simples_destino.pop(chave_destino)
+        if self.fluxos_simples_origem.get(chave_origem):
+            self.fluxos_simples_origem.pop(chave_origem)
 
     def adiciona_fluxo(self, fluxo: Fluxo):
-        tupla_recorrencia = (fluxo.src, fluxo.dst, fluxo.sport, fluxo.dport)
-        # Se o valor do dicionario for None, cria uma nova recorrencia
-        if not self.recorrencias.get(tupla_recorrencia):
-            recorrencia = Recorrencia(fluxo)
-            self.recorrencias[tupla_recorrencia] = recorrencia
+        listaNome = [fluxo.src, fluxo.dst]
+        listaNome.sort()
+        prenome = listaNome[0] + " <-> " + listaNome[1] + " : "
+        chave_destino = prenome + fluxo.dport
+        chave_origem = prenome + fluxo.sport
+        # Se o valor do dicionario for None, adiciona ele aos fluxos simples
+        if not self.recorrencias.get(chave_destino):
+            if not self.recorrencias.get(chave_origem):
+                # Verifica se o fluxo destino está no fluxos_simples_destino
+                if not self.fluxos_simples_destino.get(chave_destino):
+                    # Verifica se o fluxo origem está no fluxos_simples_origem
+                    if not self.fluxos_simples_origem.get(chave_origem):
+                        self.fluxos_simples_destino[chave_destino] = fluxo
+                        self.fluxos_simples_origem[chave_origem] = fluxo
+                    else:
+                        fluxo_encontrado = self.fluxos_simples_origem[chave_origem]
+                        recorrencia = Recorrencia(fluxo_encontrado, chave_origem)
+                        recorrencia.adiciona_fluxo(fluxo)
+                        self.recorrencias[chave_origem] = recorrencia
+                        self.remove_fluxos_simples(chave_origem, chave_destino)
+                else:
+                    fluxo_encontrado = self.fluxos_simples_destino[chave_destino]
+                    recorrencia = Recorrencia(fluxo, chave_destino)
+                    recorrencia.adiciona_fluxo(fluxo_encontrado)
+                    self.recorrencias[chave_destino] = recorrencia
+                    self.remove_fluxos_simples(chave_origem, chave_destino)
+
+            else:
+                recorrencia = self.recorrencias[chave_origem]
+                recorrencia.adiciona_fluxo(fluxo)
         else:
-            # Se a tupla já existe no conjunto, adicione ela ao conjunto existente
-            recorrencia = self.recorrencias[tupla_recorrencia]
+            recorrencia = self.recorrencias[chave_destino]
             recorrencia.adiciona_fluxo(fluxo)
 
 def main():
