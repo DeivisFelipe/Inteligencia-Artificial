@@ -1,12 +1,16 @@
 import subprocess
 import os
 import time
+import matplotlib.pyplot as plt
 
 PATH_TSHARK = "C:/Program Files/Wireshark/tshark.exe"
 PATH_PCAP = 'Datasets/Pcaps/Analisador1.pcap'
 ARQUIVO_FLUXOS = "AvaliadorFluxo/Saida/Fluxos.txt"
 ARQUIVO_FLUXOS_ORDENADOS = "AvaliadorFluxo/Saida/FluxosOrdenados.txt"
 ARQUIVO_SAIDA = "AvaliadorFluxo/Saida/Avaliacao.txt"
+PASTA_GRAFICOS = "AvaliadorFluxo/Saida/Graficos"
+# PLOT
+QUANTIDADE_FLUXOS_HISTOGRAMA = 10
 
 # Pesos de cada valor
 PESO_NSPACKGES = 1
@@ -307,7 +311,39 @@ def main():
                 f.write("=" * 105 + "\n\n")
                 f.write(str(recorrencia))
                 f.write("\n")
+
     print("Saída salva com sucesso!")
+
+    # Percorre todos os fluxos e faz um grafico de número de fluxos pela quantidade de bytes
+    print("Gerando gráficos...")
+    x = []
+    y = []
+    for index, recorrencia in avaliador.recorrencias.items():
+        x.append(recorrencia.bytes)
+        y.append(recorrencia.ocorrencias)
+
+    # print(x, y)
+    plt.scatter(x, y)
+    plt.xlabel("Quantidade de bytes")
+    plt.ylabel("Número de fluxos")
+    plt.title("Número de bytes pela quantidade de fluxos")
+    plt.savefig(f"{PASTA_GRAFICOS}/NumeroFluxosQuantidadeBytes.png")
+
+    # Histograma de quantidade de ocorrencias
+    # zera o plot
+    plt.clf()
+    x = []
+    for index, recorrencia in avaliador.recorrencias.items():
+        if recorrencia.ocorrencias >= QUANTIDADE_FLUXOS_HISTOGRAMA:
+            x.append(recorrencia.ocorrencias)
+    plt.hist(x, bins=100, edgecolor='black', histtype='bar')
+    plt.xlabel("Quantidade de ocorrencias")
+    plt.ylabel("Número de fluxos")
+    plt.title("Histograma de quantidade de ocorrencias")
+    plt.savefig(f"{PASTA_GRAFICOS}/HistogramaOcorrencias.png")
+
+    print("Gráficos gerados com sucesso!")
+    
 
 if __name__ == '__main__':
     # se tiver o argumento --gera-fluxos, gera o arquivo de fluxos
