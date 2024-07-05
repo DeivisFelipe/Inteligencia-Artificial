@@ -4,7 +4,7 @@ import time
 import matplotlib.pyplot as plt
 
 PATH_TSHARK = "C:/Program Files/Wireshark/tshark.exe"
-PATH_PCAP = 'Datasets/Pcaps/Analisador1.pcap'
+PATH_PCAP = 'Datasets/Pcaps/equinix-nyc.dirA.20190117-130000.UTC.anon.pcap'
 ARQUIVO_FLUXOS = "AvaliadorFluxo/Saida/Fluxos.txt"
 ARQUIVO_FLUXOS_ORDENADOS = "AvaliadorFluxo/Saida/FluxosOrdenados.txt"
 ARQUIVO_SAIDA = "AvaliadorFluxo/Saida/Avaliacao.txt"
