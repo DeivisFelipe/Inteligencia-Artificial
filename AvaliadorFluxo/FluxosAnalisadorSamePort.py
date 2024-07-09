@@ -25,7 +25,7 @@ PESO_DURATION = 1
 # Pontuação minima
 PONTUACAO_MINIMA = 7
 # Quantidade de fluxos que serão considerados
-QUANTIDADE_FLUXOS = 100
+QUANTIDADE_FLUXOS = 2
 # Tempo de vida de uma recorrencia
 TEMPO_VIDA = 100
 
