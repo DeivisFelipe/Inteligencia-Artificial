@@ -1,8 +1,8 @@
 
-Cancer de Pele - v2 Versao 1
+Cancer de Pele - v1 Versao 1
 ==============================
 
-This dataset was exported via roboflow.com on July 9, 2024 at 1:54 PM GMT
+This dataset was exported via roboflow.com on July 10, 2024 at 6:01 PM GMT
 
 Roboflow is an end-to-end computer vision platform that helps you
 * collaborate with your team on computer vision projects
@@ -18,7 +18,7 @@ visit https://github.com/roboflow/notebooks
 To find over 100k other datasets and pre-trained models, visit https://universe.roboflow.com
 
 The dataset includes 260 images.
-Carcinoma-de-celulas-escamosas are annotated in YOLOv8 format.
+Cancer are annotated in YOLOv8 format.
 
 The following pre-processing was applied to each image:
 * Auto-orientation of pixel data (with EXIF-orientation stripping)

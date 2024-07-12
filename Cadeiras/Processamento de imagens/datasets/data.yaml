@@ -3,11 +3,11 @@ val: ../valid/images
 test: ../test/images
 
 nc: 2
-names: ['Cancer', 'Nao cancer']
+names: ['Benigno', 'Cancer']
 
 roboflow:
   workspace: processamento-de-imagem-5bvqy
   project: cancer-de-pele
-  version: 2
+  version: 1
   license: CC BY 4.0
-  url: https://universe.roboflow.com/processamento-de-imagem-5bvqy/cancer-de-pele/dataset/2
+  url: https://universe.roboflow.com/processamento-de-imagem-5bvqy/cancer-de-pele/dataset/1
