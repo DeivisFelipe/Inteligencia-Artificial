@@ -1,406 +1,258 @@
-import subprocess
-import os
-import time
-import matplotlib.pyplot as plt
+# Autor: Deivis Felipe Guerreiro Fagundes
+# Email: deivis.guerreiro@gmail.com
+# Institute: UFSM - Federal University of Santa Maria
+# Data: 2024-05-10
+# Update: 2024-07-12
 
+# Python imports
+
+import matplotlib.pyplot as plt
+import subprocess
+import time
+
+# Models
+
+from AvaliadorFluxo.Models.Evaluator import Evaluator
+from AvaliadorFluxo.Models.Flow import Flow
+
+# HIPERPARAMETERS
+
+# Files
+EVALUATION_JSON_FILE = "AvaliadorFluxo/Saida/Avaliacao.json"
+EVALUATION_TXT_FILE = "AvaliadorFluxo/Saida/Avaliacao.txt"
+FLOWS_FILE = "AvaliadorFluxo/Saida/Fluxos.txt"
+GRAPHS_DIR = "AvaliadorFluxo/Saida/Graficos"
 PATH_TSHARK = "C:/Program Files/Wireshark/tshark.exe"
 PATH_PCAP = 'Datasets/Pcaps/201904091200.pcap'
-ARQUIVO_FLUXOS = "AvaliadorFluxo/Saida/Fluxos.txt"
-ARQUIVO_FLUXOS_ORDENADOS = "AvaliadorFluxo/Saida/FluxosOrdenados.txt"
-ARQUIVO_SAIDA = "AvaliadorFluxo/Saida/Avaliacao.txt"
-PASTA_GRAFICOS = "AvaliadorFluxo/Saida/Graficos"
-# PLOT
-QUANTIDADE_FLUXOS_HISTOGRAMA = 10
+SORTED_FLOWS_FILE = "AvaliadorFluxo/Saida/FluxosOrdenados.txt"
 
-# Pesos de cada valor
-PESO_NSPACKGES = 1
-PESO_SBYTES = 1
-PESO_NRPACKGES = 1
-PESO_RBYTES = 1
-PESO_NTPACKGES = 5
-PESO_TBYTES = 5
-PESO_DURATION = 3
-# Pontuação minima
-PONTUACAO_MINIMA = 7
+# Plot
+HIST_BIN_SIZE = 10
 
-# Quantidade de fluxos para ser considerado possivelmente recorrente
-QUANTIDADE_FLUXOS = 5
+# Weights for the evaluation
+WEIGHTS_NSPACKGES = 1
+WEIGHTS_SBYTES = 1
+WEIGHTS_NRPACKGES = 1
+WEIGHTS_RBYTES = 1
+WEIGHTS_NTPACKGES = 5
+WEIGHTS_TBYTES = 5
+WEIGHTS_DURATION = 3
 
-# Pontuação mínima para ser considerado recorrente
-PONTUACAO_MINIMA = 7
+# Quantity of flows to be considered possibly recurrent
+MINIMUM_FLOWS = 5
 
-# Porcentagem de fluxos que serão considerados
-PORCENTAGEM_FLUXOS = 0.3
+# Minimum score to be considered recurrent
+MINIMUM_SCORE = 7
 
-# Boleanos
-GERA_ARQUIVO_AVALIACAO_TXT = True
-GERA_ARQUIVO_AVALIACAO_JSON = False
-GERA_GRAFICOS = False
+# Percent of flows that will be considered
+PERCENT_FLOWS = 0.3
 
+# Booleans
+MAKE_EVALUATION_TXT = True
+MAKE_EVALUATION_JSON = False
+MAKE_FLOWS = False
+MAKE_GRAPHS = False
+MAKE_ORDERED_FLOWS = False
 
-def gera_fluxos():
-    """
-        Essa função é responsável por gerar os dados dos fluxos utilizando o tshark
-        Ele só pega os fluxos tcp do arquivo PCAP
-    """
+# Global variables
+weights = {
+    "nspackges": WEIGHTS_NSPACKGES,
+    "sbytes": WEIGHTS_SBYTES,
+    "nrpackges": WEIGHTS_NRPACKGES,
+    "rbytes": WEIGHTS_RBYTES,
+    "ntpackges": WEIGHTS_NTPACKGES,
+    "tbytes": WEIGHTS_TBYTES,
+    "duration": WEIGHTS_DURATION
+}
 
-    # Tempo de execução
-    tempo_inicial = time.time()
-    print("Gerando arquivo de fluxos...")
-    # Cria o subprocesso e salva no arquivo
-    subprocess.run([PATH_TSHARK, "-r", PATH_PCAP, "-Q", "-z", "conv,tcp", ">", ARQUIVO_FLUXOS], shell=True)
-    
-    print("Arquivo de fluxos gerado com sucesso!")
-    print(f"Tempo de execução: {time.time() - tempo_inicial} segundos")
+# Evaluator
+evaluator = Evaluator(weights)
 
-    # Faz a leitura do arquivo de fluxos, elemina as linhas iniciais e faz a ordenação pelo relative start
-    with open(ARQUIVO_FLUXOS, 'r') as f:
-        linhas = f.readlines()
-        print("Ordenando arquivo de fluxos...")
-        # Ordena as linhas pelo relative start
-        linhas = sorted(linhas[5:-1], key=lambda x: float(x.split()[12].replace(",", ".")))
-        print("Arquivo de fluxos ordenado com sucesso!")
+def convert_bytes(value, unit):
+    '''
+        This function converts values to bytes
+    '''
 
-        # Salva as linhas ordenadas no arquivo
-        with open(ARQUIVO_FLUXOS_ORDENADOS, 'w') as f:
-            print("Salvando arquivo de fluxos ordenado...")
-            for linha in linhas:
-                f.write(linha)
-            print("Arquivo de fluxos ordenado salvo com sucesso!")
+    if unit == "bytes":
+        return value
+    if unit == "kB":
+        return value * 1024
+    if unit == "MB":
+        return value * 1024 * 1024
+    if unit == "GB":
+        return value * 1024 * 1024 * 1024
+    if unit == "TB":
+        return value * 1024 * 1024 * 1024 * 1024
 
+    return value
 
-class Fluxo:
-    def __init__(self, src, sport, dst, dport, nspackges, sbytes, nrpackges, rbytes, ntpackges, tbytes, rtime, duration) -> None:
-        """
-            Essa classe representa um fluxo, com todas as suas informações
-        """
-        self.predicted = None
-        self.src = src
-        self.sport = sport
-        self.dst = dst
-        self.dport = dport
-        self.nspackges = nspackges
-        self.sbytes = sbytes
-        self.nrpackges = nrpackges
-        self.rbytes = rbytes
-        self.ntpackges = ntpackges
-        self.tbytes = tbytes
-        self.rtime = rtime
-        self.duration = duration
+def make_graphs():
+    print("Making graphs...")
+    x = []
+    y = []
+    for index, recurrence in evaluator.recurrences.items():
+        x.append(recurrence.bytes)
+        y.append(recurrence.ocorrencias)
 
-    def __str__(self) -> str:
-        # predicted| src| sport| dst| dport| nspackges| sbytes| nrpackges| rbytes| ntpackges| tbytes| rtime| duration
-        # cada campo com 10 caracteres
-        return f"| {self.predicted:15} | {self.src:15} | {self.sport:10} | {self.dst:15} | {self.dport:10} | {self.nspackges:10} | {self.sbytes:10} | {self.nrpackges:10} | {self.rbytes:10} | {self.ntpackges:10} | {self.tbytes:10} | {self.rtime:10.2f} | {self.duration:10.2f} |"
+    plt.scatter(x, y)
+    plt.xlabel("Total bytes")
+    plt.ylabel("Number of flows")
+    plt.title("Number of flows x Total bytes")
+    plt.savefig(f"{GRAPHS_DIR}/NumeroFluxosQuantidadeBytes.png")
 
-    def getJson(self):
-        return {
-            "predicted": self.predicted,
-            "src": self.src,
-            "sport": self.sport,
-            "dst": self.dst,
-            "dport": self.dport,
-            "nspackges": self.nspackges,
-            "sbytes": self.sbytes,
-            "nrpackges": self.nrpackges,
-            "rbytes": self.rbytes,
-            "ntpackges": self.ntpackges,
-            "tbytes": self.tbytes,
-            "rtime": self.rtime,
-            "duration": self.duration
-        }
+    # Histogram of occurrences
+    plt.clf()
+    x = []
+    for index, recurrence in evaluator.recurrences.items():
+        if recurrence.total_flow >= HIST_BIN_SIZE:
+            x.append(recurrence.total_flow)
+    plt.hist(x, bins=100, edgecolor='black', histtype='bar')
+    plt.xlabel("Total occurrences")
+    plt.ylabel("Number of flows")
+    plt.title("Total occurrences x Number of flows")
+    plt.savefig(f"{GRAPHS_DIR}/HistogramaOcorrencias.png")
 
-class Recorrencia:
-    def __init__(self, fluxo: Fluxo, chave: tuple) -> None:
-        """
-            Essa classe contêm os fluxos recorrentes, agrupando pela tupla
-        """
-        self.chave = chave
-        self.src = fluxo.src
-        self.dst = fluxo.dst
-        self.sport = fluxo.sport
-        self.dport = fluxo.dport
-        self.rtime = fluxo.rtime
+    print("Graphs made!")
 
-        # Médias dos valores
-        self.npackges_media = fluxo.ntpackges
-        self.bytes_media = fluxo.tbytes
-        self.duration_media = fluxo.duration
+def save_evaluation():
+    if MAKE_EVALUATION_TXT:
+        print("Saving output to txt file...")
+        with open(EVALUATION_TXT_FILE, 'w') as f:
+            for index, recurrence in evaluator.recurrences.items():
+                # Se tiver mais de uma ocorrencia, printa
+                if recurrence.score >= MINIMUM_SCORE:
+                    f.write("=" * 105 + "\n\n")
+                    f.write(str(recurrence))
+                    f.write("\n")
+        print("Output saved successfully!")
 
-        # Médias recorrencia
-        self.nspackges_recorrencia_media = fluxo.nspackges
-        self.sbytes_recorrencia_media = fluxo.sbytes
-        self.nrpackges_recorrencia_media = fluxo.nrpackges
-        self.rbytes_recorrencia_media = fluxo.rbytes
-        self.npackges_recorrencia_media = fluxo.ntpackges
-        self.bytes_recorrencia_media = fluxo.tbytes
-        self.duration_recorrencia_media = fluxo.duration
+    if MAKE_EVALUATION_JSON:
+        print("Saving output to json file...")
+        with open(EVALUATION_JSON_FILE, 'w') as f:
+            f.write("{\n")
+            f.write("\"recorrencias\": [\n")
+            f.write(",\n".join([str(recurrence.getJson()) for recurrence in evaluator.recurrences.values() if recurrence.score >= MINIMUM_SCORE]))
+            f.write("\n]\n")
+            f.write("}\n")
+        print("Output saved successfully!")
 
-        # Totais
-        self.npackges = fluxo.ntpackges
-        self.bytes = fluxo.tbytes
-        self.duration = fluxo.duration
+def start_evaluation():
+    '''
+        This function is responsible for starting the evaluation
+    '''
 
-        self.ocorrencias = 1
-        self.score = 0
-        self.fluxos = [fluxo]
+    print("Initializing the evaluation")
 
-    def __str__(self) -> str:
-        # Printa o cabeçalho da recorrencia
-        recorrencia = "-" * 105 + "\n"
-        recorrencia += f"| Chave:     | {self.chave:88} |\n"
-        recorrencia += "-" * 105 + "\n"
-        recorrencia += f"| Ocorrencias: {str(self.ocorrencias):88} |\n"
-        # recorrencia += "-" * 105 + "\n"
-        # recorrencia += f"| Pontuacao: {str(self.pontuacao):90} |\n"
-        recorrencia += "-" * 105 + "\n"
-        recorrencia += "|" + " " * 22 + " Medias" + " " * 22 + "|" + " " * 22 + " Totais" + " " * 22 + "|\n"
-        recorrencia += "-" * 105 + "\n"
-        recorrencia += "|        npackges |         bytes  |       duration |        npackges |         bytes  |       duration |\n"
-        recorrencia += "-" * 105 + "\n"
-        # Printa só no maximo 2 casas decimais
-        recorrencia += f"| {self.npackges_media:15.2f} | {self.bytes_media:14.2f} | {self.duration_media:14.2f} | {self.npackges:15.2f} | {self.bytes:14.2f} | {self.duration:14.2f} |\n"
-        recorrencia += "-" * 105 + "\n\n"
-        
-        # Divisa
-        divisa = "*" * 105 + "\n"
-        
-        # Printa todos os fluxos
-        # Faz o cabeçalho dos fluxos
-        fluxos = "\n"
-        fluxos += "-" * 167 + "\n"
-        fluxos += "|" + " " * 79 + " Fluxos" + " " * 79 + "|\n" 
-        fluxos += "-" * 167 + "\n"
-        fluxos += "|             src |      sport |             dst |      dport |  nspackges |     sbytes |  nrpackges |     rbytes |  ntpackges |     tbytes |      rtime |   duration |\n"
-        fluxos += "-" * 167 + "\n"
-        fluxos += "\n".join([str(fluxo) for fluxo in self.fluxos])
-        fluxos += "\n" + "-" * 167 + "\n"
-        return recorrencia + divisa + fluxos
-    
-    def adiciona_fluxo(self, fluxo: Fluxo):
-        #self.avalia(fluxo)
-        self.recalcula_valores(fluxo)
-        self.ocorrencias += 1
-        self.rtime = fluxo.rtime
-        self.fluxos.append(fluxo)
+    # Read the sorted flows file
+    with open(SORTED_FLOWS_FILE, 'r') as f:
+        lines = f.readlines()
 
-    def formula(self, fluxo: Fluxo) -> float:
-        return 0
+        # Progress
+        progress = 0
+        # Total lines
+        total_lines = len(lines)
+        # Time the execution
+        time_execution = time.time()
+        # Quantity of flows to be considered
+        MINIMUM_FLOWS = int(total_lines * PERCENT_FLOWS)
+        percent = MINIMUM_FLOWS // 100
 
-    def avalia(self, fluxo: Fluxo):
-        pass
+        for index, line in enumerate(lines[:MINIMUM_FLOWS]):
 
-    def recalcula_valores(self, fluxo: Fluxo):
-        # Faz a média dos valores, considerando a quantidade de ocorrencias
-        # soma_nspackges = self.nspackges * (self.ocorrencias) + fluxo.nspackges
-        # self.nspackges = soma_nspackges / (self.ocorrencias + 1)
-        # soma_sbytes = self.sbytes * (self.ocorrencias) + fluxo.sbytes
-        # self.sbytes = soma_sbytes / (self.ocorrencias + 1)
-        # soma_nrpackges = self.nrpackges * (self.ocorrencias) + fluxo.nrpackges
-        # self.nrpackges = soma_nrpackges / (self.ocorrencias + 1)
-        # soma_rbytes = self.rbytes * (self.ocorrencias) + fluxo.rbytes
-        # self.rbytes = soma_rbytes / (self.ocorrencias + 1)
-        soma_npackges_media = self.npackges_media * (self.ocorrencias) + fluxo.ntpackges
-        self.npackges_media = soma_npackges_media / (self.ocorrencias + 1)
-        soma_bytes_media = self.bytes_media * (self.ocorrencias) + fluxo.tbytes
-        self.bytes_media = soma_bytes_media / (self.ocorrencias + 1)
-        soma_duration_media = self.duration_media * (self.ocorrencias) + fluxo.duration
-        self.duration_media = soma_duration_media / (self.ocorrencias + 1)
+            # Update the progress
+            if index != 0 and index % percent == 0 and progress < 100:
+                progress += 1
+                print(f"Progress: {progress}%, index: {index}/{MINIMUM_FLOWS}, Number of recurrences: {len(evaluator.recurrences)}")
 
-        # Soma os valores aos totais
-        self.npackges += fluxo.ntpackges
-        self.bytes += fluxo.tbytes
-        self.duration += fluxo.duration
-
-    def getJson(self):
-        return {
-            "chave": self.chave,
-            "ocorrencias": self.ocorrencias,
-            "pontuacao": self.pontuacao,
-            "fluxos": [fluxo.getJson() for fluxo in self.fluxos]
-        }
-
-
-class AvaliadorFluxo:
-    def __init__(self) -> None:
-        self.recorrencias = {}
-        self.fluxos_simples_destino = {}
-        self.fluxos_simples_origem = {}
-
-    def remove_fluxos_simples(self, chave_origem, chave_destino):
-        if self.fluxos_simples_destino.get(chave_destino):
-            self.fluxos_simples_destino.pop(chave_destino)
-        if self.fluxos_simples_origem.get(chave_origem):
-            self.fluxos_simples_origem.pop(chave_origem)
-
-    def adiciona_fluxo(self, fluxo: Fluxo):
-        listaNome = [fluxo.src, fluxo.dst]
-        listaNome.sort()
-        prenome = listaNome[0] + " <-> " + listaNome[1] + " : "
-        chave_destino = prenome + fluxo.dport
-        chave_origem = prenome + fluxo.sport
-        # Se o valor do dicionario for None, adiciona ele aos fluxos simples
-        if not self.recorrencias.get(chave_destino):
-            if not self.recorrencias.get(chave_origem):
-                # Verifica se o fluxo destino está no fluxos_simples_destino
-                if not self.fluxos_simples_destino.get(chave_destino):
-                    # Verifica se o fluxo origem está no fluxos_simples_origem
-                    if not self.fluxos_simples_origem.get(chave_origem):
-                        self.fluxos_simples_destino[chave_destino] = fluxo
-                        self.fluxos_simples_origem[chave_origem] = fluxo
-                    else:
-                        fluxo_encontrado = self.fluxos_simples_origem[chave_origem]
-                        recorrencia = Recorrencia(fluxo_encontrado, chave_origem)
-                        recorrencia.adiciona_fluxo(fluxo)
-                        self.recorrencias[chave_origem] = recorrencia
-                        self.remove_fluxos_simples(chave_origem, chave_destino)
-                else:
-                    fluxo_encontrado = self.fluxos_simples_destino[chave_destino]
-                    recorrencia = Recorrencia(fluxo, chave_destino)
-                    recorrencia.adiciona_fluxo(fluxo_encontrado)
-                    self.recorrencias[chave_destino] = recorrencia
-                    self.remove_fluxos_simples(chave_origem, chave_destino)
-
-            else:
-                recorrencia = self.recorrencias[chave_origem]
-                recorrencia.adiciona_fluxo(fluxo)
-        else:
-            recorrencia = self.recorrencias[chave_destino]
-            recorrencia.adiciona_fluxo(fluxo)
-
-def main():
-    # Cria o avaliador de fluxo
-    avaliador = AvaliadorFluxo()
-    # Lê o arquivo de fluxos
-    with open(ARQUIVO_FLUXOS_ORDENADOS, 'r') as f:
-        linhas = f.readlines()
-        # Porcentagem de progresso
-        progresso = 0
-        # Quantidade de linhas
-        quantidade_linhas = len(linhas)
-        print("Analisando fluxos...")
-        tempo_inicial = time.time()
-        # Pega a quantidade de fluxos que serão considerados
-        quantidade_fluxos = int(quantidade_linhas * PORCENTAGEM_FLUXOS)
-        quantidade_porcentagem = quantidade_fluxos // 100
-        # Pula as 5 primeiras linhas
-        for index, linha in enumerate(linhas[0:quantidade_fluxos]):
-            # Atualiza a porcentagem
-            if index != 0 and index % quantidade_porcentagem == 0 and progresso < 100:
-                progresso += 1
-                print(f"Progresso: {progresso}%, index: {index}/{quantidade_fluxos}, numero de recorrencias: {len(avaliador.recorrencias)}")
-            # Separa a linha por espaços
-            partes = linha.split()
-            # Pega o src e a sport
-            srcPort = partes[0].split(":")
+            slots = line.split()
+            # src e a sport
+            srcPort = slots[0].split(":")
             src = srcPort[0]
             sport = srcPort[1]
 
-            # Se for ipv6, pula (srcPort tem mais de 3 elementos)
+            # If it is ipv6, skip (srcPort has more than 3 elements)
             if len(srcPort) > 2:
                 continue
-            # Pega o dst e a dport
-            dstPort = partes[2].split(":")
+
+            # dst e a dport
+            dstPort = line[2].split(":")
             dst = dstPort[0]
             dport = dstPort[1]
-            # Pega a quantidade de bytes enviados e recebidos, verifica se é em bytes, kB, MB ou GB
-            nspackges = int(partes[3])
-            sbytes = int(partes[4])
-            tsbytes = partes[5]
-            if tsbytes == "kB":
-                sbytes = sbytes * 1024
-            elif tsbytes == "MB":
-                sbytes = sbytes * 1024 * 1024
-            elif tsbytes == "GB":
-                sbytes = sbytes * 1024 * 1024 * 1024
 
-            nrpackges = int(partes[6])
-            rbytes = int(partes[7])
-            trbytes = partes[8]
-            if trbytes == "kB":
-                rbytes = rbytes * 1024
-            elif trbytes == "MB":
-                rbytes = rbytes * 1024 * 1024
-            elif trbytes == "GB":
-                rbytes = rbytes * 1024 * 1024 * 1024
+            # If it is ipv6, skip (dstPort has more than 3 elements)
+            if len(dstPort) > 2:
+                continue
 
-            ntpackges = int(partes[9])
-            tbytes = int(partes[10])
-            ttbytes = partes[11]
-            if ttbytes == "kB":
-                tbytes = tbytes * 1024
+            nspackges = int(slots[6])
+            sbytes = convert_bytes(int(slots[7]), slots[8])
 
-            rtime = float(partes[12].replace(",", "."))
-            duration = float(partes[13].replace(",", "."))
+            nrpackges = int(slots[3])
+            rbytes = convert_bytes(int(slots[4]), slots[5])
 
-            # Cria o fluxo
-            fluxo = Fluxo(src, sport, dst, dport, nspackges, sbytes, nrpackges, rbytes, ntpackges, tbytes, rtime, duration)
-            
-            # Adiciona o fluxo no avaliador
-            avaliador.adiciona_fluxo(fluxo)
+            ntpackges = int(slots[9])
+            tbytes = convert_bytes(int(slots[10]), slots[11])
 
-        print("Análise dos fluxos concluída!")
-        print(f"Tempo de execução: {time.time() - tempo_inicial} segundos")
+            rtime = float(slots[12].replace(",", "."))
+            duration = float(slots[13].replace(",", "."))
 
-    if GERA_ARQUIVO_AVALIACAO_TXT:
-        # Salva a saída em um arquivo
-        print("Salvando saída em arquivo...")
-        with open(ARQUIVO_SAIDA, 'w') as f:
-            for index, recorrencia in avaliador.recorrencias.items():
-                # Se tiver mais de uma ocorrencia, printa
-                if recorrencia.score >= PONTUACAO_MINIMA:
-                    f.write("=" * 105 + "\n\n")
-                    f.write(str(recorrencia))
-                    f.write("\n")
+            # Create a flow
+            flow = Flow(src, sport, dst, dport, nspackges, sbytes, nrpackges, rbytes, ntpackges, tbytes, rtime, duration)
+            evaluator.add_flow(flow)
 
-        print("Saída salva com sucesso!")
+        print("Evaluation finished!")
+        print(f"Time execution: {time.time() - time_execution} seconds")
 
-    if GERA_ARQUIVO_AVALIACAO_JSON:
-        # Salva a saída em um arquivo json
-        print("Salvando saída em arquivo json...")
-        with open("AvaliadorFluxo/Saida/Avaliacao.json", 'w') as f:
-            f.write("{\n")
-            f.write("\"recorrencias\": [\n")
-            f.write(",\n".join([str(recorrencia.getJson()) for recorrencia in avaliador.recorrencias.values() if recorrencia.score >= PONTUACAO_MINIMA]))
-            f.write("\n]\n")
-            f.write("}\n")
+def make_ordered_flows():
+    '''
+        This function is responsible for ordering the flows file
+    '''
 
-        print("Saída salva com sucesso!")
+    # Time the execution
+    time_execution = time.time()
 
-    if GERA_GRAFICOS:
-        # Percorre todos os fluxos e faz um grafico de número de fluxos pela quantidade de bytes
-        print("Gerando gráficos...")
-        x = []
-        y = []
-        for index, recorrencia in avaliador.recorrencias.items():
-            x.append(recorrencia.bytes)
-            y.append(recorrencia.ocorrencias)
+    # Do the reading of the flows file, eliminate the initial lines and sort by relative start
+    with open(FLOWS_FILE, 'r') as f:
+        lines = f.readlines()
 
-        # print(x, y)
-        plt.scatter(x, y)
-        plt.xlabel("Quantidade de bytes")
-        plt.ylabel("Número de fluxos")
-        plt.title("Número de bytes pela quantidade de fluxos")
-        plt.savefig(f"{PASTA_GRAFICOS}/NumeroFluxosQuantidadeBytes.png")
+        print("Ordering flows file...")
 
-        # Histograma de quantidade de ocorrencias
-        # zera o plot
-        plt.clf()
-        x = []
-        for index, recorrencia in avaliador.recorrencias.items():
-            if recorrencia.ocorrencias >= QUANTIDADE_FLUXOS_HISTOGRAMA:
-                x.append(recorrencia.ocorrencias)
-        plt.hist(x, bins=100, edgecolor='black', histtype='bar')
-        plt.xlabel("Quantidade de ocorrencias")
-        plt.ylabel("Número de fluxos")
-        plt.title("Histograma de quantidade de ocorrencias")
-        plt.savefig(f"{PASTA_GRAFICOS}/HistogramaOcorrencias.png")
+        # Ordena as lines pelo relative start
+        lines = sorted(lines[5:-1], key=lambda x: float(x.split()[12].replace(",", ".")))
 
-        print("Gráficos gerados com sucesso!")
+        print("Flows file ordered!")
+
+        # Save the sorted flows file
+        with open(SORTED_FLOWS_FILE, 'w') as f:
+            print("Saving sorted flows file...")
+            for line in lines:
+                f.write(line)
+            print("Sorted flows file saved!")
+
+    print(f"Time execution to sort: {time.time() - time_execution} seconds")
+
+def make_flows():
+    """
+        This function is responsible for generating the flow data using tshark
+        It only takes the tcp flows from the PCAP file
+    """
+
+    # Time the execution
+    time_execution = time.time()
+
+    print("Generating flows...")
+
+    subprocess.run([PATH_TSHARK, "-r", PATH_PCAP, "-Q", "-z", "conv,tcp", ">", FLOWS_FILE], shell=True)
+    
+    print("Flows generated!")
+
+    print(f"Time execution to generate: {time.time() - time_execution} seconds")
     
 
 if __name__ == '__main__':
-    # se tiver o argumento --gera-fluxos, gera o arquivo de fluxos
-    if '--gera-fluxos' in os.sys.argv:
-        gera_fluxos()
-    main()
+    if MAKE_FLOWS:
+        make_flows()
+    if MAKE_ORDERED_FLOWS:
+        make_ordered_flows()
+    start_evaluation()
+    if MAKE_GRAPHS: 
+        make_flows()
