@@ -17,20 +17,26 @@ PESO_NSPACKGES = 1
 PESO_SBYTES = 1
 PESO_NRPACKGES = 1
 PESO_RBYTES = 1
-PESO_NTPACKGES = 1
+PESO_NTPACKGES = 5
 PESO_TBYTES = 5
-PESO_RTIME = 0
-PESO_DURATION = 1
-
+PESO_DURATION = 3
 # Pontuação minima
 PONTUACAO_MINIMA = 7
-# Quantidade de fluxos que serão considerados
-QUANTIDADE_FLUXOS = 2
-# Tempo de vida de uma recorrencia
-TEMPO_VIDA = 100
+
+# Quantidade de fluxos para ser considerado possivelmente recorrente
+QUANTIDADE_FLUXOS = 5
+
+# Pontuação mínima para ser considerado recorrente
+PONTUACAO_MINIMA = 7
 
 # Porcentagem de fluxos que serão considerados
-PORCENTAGEM = 1
+PORCENTAGEM_FLUXOS = 0.3
+
+# Boleanos
+GERA_ARQUIVO_AVALIACAO_TXT = True
+GERA_ARQUIVO_AVALIACAO_JSON = False
+GERA_GRAFICOS = False
+
 
 def gera_fluxos():
     """
@@ -68,6 +74,7 @@ class Fluxo:
         """
             Essa classe representa um fluxo, com todas as suas informações
         """
+        self.predicted = None
         self.src = src
         self.sport = sport
         self.dst = dst
@@ -82,12 +89,13 @@ class Fluxo:
         self.duration = duration
 
     def __str__(self) -> str:
-        # src| sport| dst| dport| nspackges| sbytes| nrpackges| rbytes| ntpackges| tbytes| rtime| duration
+        # predicted| src| sport| dst| dport| nspackges| sbytes| nrpackges| rbytes| ntpackges| tbytes| rtime| duration
         # cada campo com 10 caracteres
-        return f"| {self.src:15} | {self.sport:10} | {self.dst:15} | {self.dport:10} | {self.nspackges:10} | {self.sbytes:10} | {self.nrpackges:10} | {self.rbytes:10} | {self.ntpackges:10} | {self.tbytes:10} | {self.rtime:10.2f} | {self.duration:10.2f} |"
+        return f"| {self.predicted:15} | {self.src:15} | {self.sport:10} | {self.dst:15} | {self.dport:10} | {self.nspackges:10} | {self.sbytes:10} | {self.nrpackges:10} | {self.rbytes:10} | {self.ntpackges:10} | {self.tbytes:10} | {self.rtime:10.2f} | {self.duration:10.2f} |"
 
     def getJson(self):
         return {
+            "predicted": self.predicted,
             "src": self.src,
             "sport": self.sport,
             "dst": self.dst,
@@ -119,14 +127,22 @@ class Recorrencia:
         self.bytes_media = fluxo.tbytes
         self.duration_media = fluxo.duration
 
+        # Médias recorrencia
+        self.nspackges_recorrencia_media = fluxo.nspackges
+        self.sbytes_recorrencia_media = fluxo.sbytes
+        self.nrpackges_recorrencia_media = fluxo.nrpackges
+        self.rbytes_recorrencia_media = fluxo.rbytes
+        self.npackges_recorrencia_media = fluxo.ntpackges
+        self.bytes_recorrencia_media = fluxo.tbytes
+        self.duration_recorrencia_media = fluxo.duration
+
         # Totais
         self.npackges = fluxo.ntpackges
         self.bytes = fluxo.tbytes
         self.duration = fluxo.duration
 
-
         self.ocorrencias = 1
-        self.pontuacao = 0
+        self.score = 0
         self.fluxos = [fluxo]
 
     def __str__(self) -> str:
@@ -265,7 +281,7 @@ def main():
         print("Analisando fluxos...")
         tempo_inicial = time.time()
         # Pega a quantidade de fluxos que serão considerados
-        quantidade_fluxos = int(quantidade_linhas * PORCENTAGEM)
+        quantidade_fluxos = int(quantidade_linhas * PORCENTAGEM_FLUXOS)
         quantidade_porcentagem = quantidade_fluxos // 100
         # Pula as 5 primeiras linhas
         for index, linha in enumerate(linhas[0:quantidade_fluxos]):
@@ -326,58 +342,61 @@ def main():
         print("Análise dos fluxos concluída!")
         print(f"Tempo de execução: {time.time() - tempo_inicial} segundos")
 
-    # Salva a saída em um arquivo
-    print("Salvando saída em arquivo...")
-    with open(ARQUIVO_SAIDA, 'w') as f:
+    if GERA_ARQUIVO_AVALIACAO_TXT:
+        # Salva a saída em um arquivo
+        print("Salvando saída em arquivo...")
+        with open(ARQUIVO_SAIDA, 'w') as f:
+            for index, recorrencia in avaliador.recorrencias.items():
+                # Se tiver mais de uma ocorrencia, printa
+                if recorrencia.score >= PONTUACAO_MINIMA:
+                    f.write("=" * 105 + "\n\n")
+                    f.write(str(recorrencia))
+                    f.write("\n")
+
+        print("Saída salva com sucesso!")
+
+    if GERA_ARQUIVO_AVALIACAO_JSON:
+        # Salva a saída em um arquivo json
+        print("Salvando saída em arquivo json...")
+        with open("AvaliadorFluxo/Saida/Avaliacao.json", 'w') as f:
+            f.write("{\n")
+            f.write("\"recorrencias\": [\n")
+            f.write(",\n".join([str(recorrencia.getJson()) for recorrencia in avaliador.recorrencias.values() if recorrencia.score >= PONTUACAO_MINIMA]))
+            f.write("\n]\n")
+            f.write("}\n")
+
+        print("Saída salva com sucesso!")
+
+    if GERA_GRAFICOS:
+        # Percorre todos os fluxos e faz um grafico de número de fluxos pela quantidade de bytes
+        print("Gerando gráficos...")
+        x = []
+        y = []
         for index, recorrencia in avaliador.recorrencias.items():
-            # Se tiver mais de uma ocorrencia, printa
-            if recorrencia.ocorrencias >= QUANTIDADE_FLUXOS:
-                f.write("=" * 105 + "\n\n")
-                f.write(str(recorrencia))
-                f.write("\n")
+            x.append(recorrencia.bytes)
+            y.append(recorrencia.ocorrencias)
 
-    print("Saída salva com sucesso!")
+        # print(x, y)
+        plt.scatter(x, y)
+        plt.xlabel("Quantidade de bytes")
+        plt.ylabel("Número de fluxos")
+        plt.title("Número de bytes pela quantidade de fluxos")
+        plt.savefig(f"{PASTA_GRAFICOS}/NumeroFluxosQuantidadeBytes.png")
 
-    # Salva a saída em um arquivo json
-    print("Salvando saída em arquivo json...")
-    with open("AvaliadorFluxo/Saida/Avaliacao.json", 'w') as f:
-        f.write("{\n")
-        f.write("\"recorrencias\": [\n")
-        f.write(",\n".join([str(recorrencia.getJson()) for recorrencia in avaliador.recorrencias.values() if recorrencia.ocorrencias >= QUANTIDADE_FLUXOS]))
-        f.write("\n]\n")
-        f.write("}\n")
+        # Histograma de quantidade de ocorrencias
+        # zera o plot
+        plt.clf()
+        x = []
+        for index, recorrencia in avaliador.recorrencias.items():
+            if recorrencia.ocorrencias >= QUANTIDADE_FLUXOS_HISTOGRAMA:
+                x.append(recorrencia.ocorrencias)
+        plt.hist(x, bins=100, edgecolor='black', histtype='bar')
+        plt.xlabel("Quantidade de ocorrencias")
+        plt.ylabel("Número de fluxos")
+        plt.title("Histograma de quantidade de ocorrencias")
+        plt.savefig(f"{PASTA_GRAFICOS}/HistogramaOcorrencias.png")
 
-    print("Saída salva com sucesso!")
-
-    # Percorre todos os fluxos e faz um grafico de número de fluxos pela quantidade de bytes
-    print("Gerando gráficos...")
-    x = []
-    y = []
-    for index, recorrencia in avaliador.recorrencias.items():
-        x.append(recorrencia.bytes)
-        y.append(recorrencia.ocorrencias)
-
-    # print(x, y)
-    plt.scatter(x, y)
-    plt.xlabel("Quantidade de bytes")
-    plt.ylabel("Número de fluxos")
-    plt.title("Número de bytes pela quantidade de fluxos")
-    plt.savefig(f"{PASTA_GRAFICOS}/NumeroFluxosQuantidadeBytes.png")
-
-    # Histograma de quantidade de ocorrencias
-    # zera o plot
-    plt.clf()
-    x = []
-    for index, recorrencia in avaliador.recorrencias.items():
-        if recorrencia.ocorrencias >= QUANTIDADE_FLUXOS_HISTOGRAMA:
-            x.append(recorrencia.ocorrencias)
-    plt.hist(x, bins=100, edgecolor='black', histtype='bar')
-    plt.xlabel("Quantidade de ocorrencias")
-    plt.ylabel("Número de fluxos")
-    plt.title("Histograma de quantidade de ocorrencias")
-    plt.savefig(f"{PASTA_GRAFICOS}/HistogramaOcorrencias.png")
-
-    print("Gráficos gerados com sucesso!")
+        print("Gráficos gerados com sucesso!")
     
 
 if __name__ == '__main__':
