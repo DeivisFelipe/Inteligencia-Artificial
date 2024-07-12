@@ -1,4 +1,4 @@
-class Fluxo:
+class Flow:
     def __init__(self, src: str, sport: str, dst: str, dport: str, nspackges: int, sbytes: int, nrpackges: int, rbytes: int, ntpackges: int, tbytes: int, rtime: float, duration: float) -> None:
         """
             This class represents a flow, with all its information

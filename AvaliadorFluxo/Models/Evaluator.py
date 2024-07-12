@@ -1,5 +1,5 @@
-from AvaliadorFluxo.Models.Flow import Flow
-from AvaliadorFluxo.Models.Recurrence import Recurrence
+from Models.Flow import Flow
+from Models.Recurrence import Recurrence
 
 class Evaluator:
     def __init__(self, weights: dict) -> None:

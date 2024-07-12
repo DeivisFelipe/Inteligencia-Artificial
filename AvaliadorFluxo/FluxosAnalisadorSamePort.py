@@ -12,8 +12,8 @@ import time
 
 # Models
 
-from AvaliadorFluxo.Models.Evaluator import Evaluator
-from AvaliadorFluxo.Models.Flow import Flow
+from Models.Evaluator import Evaluator
+from Models.Flow import Flow
 
 # HIPERPARAMETERS
 
@@ -90,7 +90,7 @@ def make_graphs():
     print("Making graphs...")
     x = []
     y = []
-    for index, recurrence in evaluator.recurrences.items():
+    for recurrence in evaluator.recurrences.values():
         x.append(recurrence.bytes)
         y.append(recurrence.ocorrencias)
 
@@ -103,7 +103,7 @@ def make_graphs():
     # Histogram of occurrences
     plt.clf()
     x = []
-    for index, recurrence in evaluator.recurrences.items():
+    for recurrence in evaluator.recurrences.values():
         if recurrence.total_flow >= HIST_BIN_SIZE:
             x.append(recurrence.total_flow)
     plt.hist(x, bins=100, edgecolor='black', histtype='bar')
@@ -118,7 +118,7 @@ def save_evaluation():
     if MAKE_EVALUATION_TXT:
         print("Saving output to txt file...")
         with open(EVALUATION_TXT_FILE, 'w') as f:
-            for index, recurrence in evaluator.recurrences.items():
+            for recurrence in evaluator.recurrences.values():
                 # Se tiver mais de uma ocorrencia, printa
                 if recurrence.score >= MINIMUM_SCORE:
                     f.write("=" * 105 + "\n\n")
@@ -165,6 +165,7 @@ def start_evaluation():
                 print(f"Progress: {progress}%, index: {index}/{MINIMUM_FLOWS}, Number of recurrences: {len(evaluator.recurrences)}")
 
             slots = line.split()
+
             # src e a sport
             srcPort = slots[0].split(":")
             src = srcPort[0]
@@ -175,7 +176,7 @@ def start_evaluation():
                 continue
 
             # dst e a dport
-            dstPort = line[2].split(":")
+            dstPort = slots[2].split(":")
             dst = dstPort[0]
             dport = dstPort[1]
 
