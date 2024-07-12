@@ -7,6 +7,8 @@
 # Python imports
 
 import matplotlib.pyplot as plt
+from progress.bar import FillingCirclesBar
+from progress.counter import Counter
 import subprocess
 import time
 
@@ -157,12 +159,14 @@ def start_evaluation():
         MINIMUM_FLOWS = int(total_lines * PERCENT_FLOWS)
         percent = MINIMUM_FLOWS // 100
 
+        bar = FillingCirclesBar('Evaluating', suffix='%(percent)d%% - %(eta)ds', max=100)
+
         for index, line in enumerate(lines[:MINIMUM_FLOWS]):
 
             # Update the progress
             if index != 0 and index % percent == 0 and progress < 100:
                 progress += 1
-                print(f"Progress: {progress}%, index: {index}/{MINIMUM_FLOWS}, Number of recurrences: {len(evaluator.recurrences)}")
+                bar.next()
 
             slots = line.split()
 
@@ -200,8 +204,11 @@ def start_evaluation():
             flow = Flow(src, sport, dst, dport, nspackges, sbytes, nrpackges, rbytes, ntpackges, tbytes, rtime, duration)
             evaluator.add_flow(flow)
 
-        print("Evaluation finished!")
-        print(f"Time execution: {time.time() - time_execution} seconds")
+        print("\nEvaluation finished!")
+        print("Total flows: ", total_lines)
+        print("Total recurrences: ", len(evaluator.recurrences))
+        # Seconds in 2 decimal places
+        print(f"Time execution: {time.time() - time_execution:.2f} seconds")
 
 def make_ordered_flows():
     '''
@@ -229,7 +236,7 @@ def make_ordered_flows():
                 f.write(line)
             print("Sorted flows file saved!")
 
-    print(f"Time execution to sort: {time.time() - time_execution} seconds")
+    print(f"Time execution to sort: {time.time() - time_execution:.2f} seconds")
 
 def make_flows():
     """
@@ -246,7 +253,7 @@ def make_flows():
     
     print("Flows generated!")
 
-    print(f"Time execution to generate: {time.time() - time_execution} seconds")
+    print(f"Time execution to generate: {time.time() - time_execution:.2f} seconds")
     
 
 if __name__ == '__main__':
