@@ -86,6 +86,22 @@ class Fluxo:
         # cada campo com 10 caracteres
         return f"| {self.src:15} | {self.sport:10} | {self.dst:15} | {self.dport:10} | {self.nspackges:10} | {self.sbytes:10} | {self.nrpackges:10} | {self.rbytes:10} | {self.ntpackges:10} | {self.tbytes:10} | {self.rtime:10.2f} | {self.duration:10.2f} |"
 
+    def getJson(self):
+        return {
+            "src": self.src,
+            "sport": self.sport,
+            "dst": self.dst,
+            "dport": self.dport,
+            "nspackges": self.nspackges,
+            "sbytes": self.sbytes,
+            "nrpackges": self.nrpackges,
+            "rbytes": self.rbytes,
+            "ntpackges": self.ntpackges,
+            "tbytes": self.tbytes,
+            "rtime": self.rtime,
+            "duration": self.duration
+        }
+
 class Recorrencia:
     def __init__(self, fluxo: Fluxo, chave: tuple) -> None:
         """
@@ -179,6 +195,14 @@ class Recorrencia:
         self.npackges += fluxo.ntpackges
         self.bytes += fluxo.tbytes
         self.duration += fluxo.duration
+
+    def getJson(self):
+        return {
+            "chave": self.chave,
+            "ocorrencias": self.ocorrencias,
+            "pontuacao": self.pontuacao,
+            "fluxos": [fluxo.getJson() for fluxo in self.fluxos]
+        }
 
 
 class AvaliadorFluxo:
@@ -311,6 +335,17 @@ def main():
                 f.write("=" * 105 + "\n\n")
                 f.write(str(recorrencia))
                 f.write("\n")
+
+    print("Saída salva com sucesso!")
+
+    # Salva a saída em um arquivo json
+    print("Salvando saída em arquivo json...")
+    with open("AvaliadorFluxo/Saida/Avaliacao.json", 'w') as f:
+        f.write("{\n")
+        f.write("\"recorrencias\": [\n")
+        f.write(",\n".join([str(recorrencia.getJson()) for recorrencia in avaliador.recorrencias.values() if recorrencia.ocorrencias >= QUANTIDADE_FLUXOS]))
+        f.write("\n]\n")
+        f.write("}\n")
 
     print("Saída salva com sucesso!")
 
