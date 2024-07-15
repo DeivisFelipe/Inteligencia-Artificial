@@ -31,23 +31,25 @@ SORTED_FLOWS_FILE = "AvaliadorFluxo/Saida/FluxosOrdenados.txt"
 # Plot
 HIST_BIN_SIZE = 10
 
-# Weights for the evaluation
-WEIGHTS_NSPACKGES = 1
-WEIGHTS_SBYTES = 1
-WEIGHTS_NRPACKGES = 1
-WEIGHTS_RBYTES = 1
-WEIGHTS_NTPACKGES = 5
-WEIGHTS_TBYTES = 5
-WEIGHTS_DURATION = 3
+# percents maximum for the evaluation 0-100
+PERCENT_NSPACKGES = 40
+PERCENT_SBYTES = 40
+PERCENT_NRPACKGES = 40
+PERCENT_RBYTES = 40
+PERCENT_NTPACKGES = 10
+PERCENT_TBYTES = 10
+PERCENT_DURATION = 10
 
 # Quantity of flows to be considered possibly recurrent
-MINIMUM_FLOWS = 5
+MINIMUM_FLOWS = 10
 
 # Minimum score to be considered recurrent
 MINIMUM_SCORE = 7
+# Maximum score
+MAXIMUM_SCORE = 10
 
 # Percent of flows that will be considered
-PERCENT_FLOWS = 0.3
+PERCENT_FLOWS = 0.2
 
 # Booleans
 MAKE_EVALUATION_TXT = True
@@ -57,18 +59,18 @@ MAKE_GRAPHS = False
 MAKE_ORDERED_FLOWS = False
 
 # Global variables
-weights = {
-    "nspackges": WEIGHTS_NSPACKGES,
-    "sbytes": WEIGHTS_SBYTES,
-    "nrpackges": WEIGHTS_NRPACKGES,
-    "rbytes": WEIGHTS_RBYTES,
-    "ntpackges": WEIGHTS_NTPACKGES,
-    "tbytes": WEIGHTS_TBYTES,
-    "duration": WEIGHTS_DURATION
+percents = {
+    "nspackges": PERCENT_NSPACKGES,
+    "sbytes": PERCENT_SBYTES,
+    "nrpackges": PERCENT_NRPACKGES,
+    "rbytes": PERCENT_RBYTES,
+    "ntpackges": PERCENT_NTPACKGES,
+    "tbytes": PERCENT_TBYTES,
+    "duration": PERCENT_DURATION
 }
 
 # Evaluator
-evaluator = Evaluator(weights)
+evaluator = Evaluator(percents, MINIMUM_FLOWS, MINIMUM_SCORE, MAXIMUM_SCORE)
 
 def convert_bytes(value, unit):
     '''
@@ -156,12 +158,12 @@ def start_evaluation():
         # Time the execution
         time_execution = time.time()
         # Quantity of flows to be considered
-        MINIMUM_FLOWS = int(total_lines * PERCENT_FLOWS)
-        percent = MINIMUM_FLOWS // 100
+        number_flows = int(total_lines * PERCENT_FLOWS)
+        percent = number_flows // 100
 
         bar = FillingCirclesBar('Evaluating', suffix='%(percent)d%% - %(eta)ds', max=100)
 
-        for index, line in enumerate(lines[:MINIMUM_FLOWS]):
+        for index, line in enumerate(lines[:number_flows]):
 
             # Update the progress
             if index != 0 and index % percent == 0 and progress < 100:
@@ -205,7 +207,7 @@ def start_evaluation():
             evaluator.add_flow(flow)
 
         print("\nEvaluation finished!")
-        print("Total flows: ", total_lines)
+        print("Total flows: ", number_flows)
         print("Total recurrences: ", len(evaluator.recurrences))
         # Seconds in 2 decimal places
         print(f"Time execution: {time.time() - time_execution:.2f} seconds")
@@ -264,3 +266,4 @@ if __name__ == '__main__':
     start_evaluation()
     if MAKE_GRAPHS: 
         make_flows()
+    save_evaluation()

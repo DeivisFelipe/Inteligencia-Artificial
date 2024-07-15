@@ -1,12 +1,15 @@
 from Models.Flow import Flow
 
 class Recurrence:
-    def __init__(self, init_flow: Flow, key: tuple, weights: dict) -> None:
+    def __init__(self, init_flow: Flow, key: tuple, percents: dict, MINIMUM_FLOWS: int, MINIMUM_SCORE: int, MAXIMUM_SCORE: int) -> None:
         """
             This class contains the recurrent flows grouped by the tuple
         """
         self.key = key
-        self.weights = weights
+        self.percents = percents
+        self.MINIMUM_FLOWS = MINIMUM_FLOWS
+        self.MINIMUM_SCORE = MINIMUM_SCORE
+        self.MAXIMUM_SCORE = MAXIMUM_SCORE
         self.src = init_flow.src
         self.dst = init_flow.dst
         self.sport = init_flow.sport
@@ -32,6 +35,10 @@ class Recurrence:
         self.bytes = 0
         self.duration = 0
 
+        self.predictions_count = 0
+        self.hits_count = 0
+        self.misses_count = 0
+        self.accuracy = 0
         self.total_flow = 0
         self.score = 0
         self.flows = []
@@ -41,13 +48,17 @@ class Recurrence:
     def __str__(self) -> str:
         # Print the recurrence slot
         recurrence_slot = "-" * 105 + "\n"
-        recurrence_slot += f"| Key:     | {self.key:88} |\n"
+        recurrence_slot += f"| Key:     | {self.key:90} |\n"
         recurrence_slot += "-" * 105 + "\n"
-        recurrence_slot += f"| Total Flow: {str(self.total_flow):88} |\n"
+        recurrence_slot += f"| Total Flow: {str(self.total_flow):89} |\n"
         recurrence_slot += "-" * 105 + "\n"
-        recurrence_slot += f"| Score: {str(self.score):90} |\n"
+        recurrence_slot += f"| Score: {str(self.score):94} |\n"
         recurrence_slot += "-" * 105 + "\n"
-        recurrence_slot += "|" + " " * 22 + " Averages" + " " * 22 + "|" + " " * 22 + " Totals" + " " * 22 + "|\n"
+        recurrence_slot += "|" + " " * 8 + " Predictions" + " " * 9 + "|" + " " * 8 + " Hits" + " " * 9 + "|" + " " * 8 + " Misses" + " " * 9  + "|" + " " * 8 + " Accuracy" + " " * 8 + "|\n"
+        recurrence_slot += "-" * 105 + "\n"
+        recurrence_slot += "|" + f"{self.predictions_count:29}" + "|" + f"{self.hits_count:22}" + "|" + f"{self.misses_count:24}" + "|" + f"{self.accuracy:25.2f}" + "|\n"
+        recurrence_slot += "-" * 105 + "\n"
+        recurrence_slot += "|" + " " * 22 + " Averages" + " " * 21 + "|" + " " * 22 + " Totals" + " " * 21 + "|\n"
         recurrence_slot += "-" * 105 + "\n"
         recurrence_slot += "|        npackges |         bytes  |       duration |        npackges |         bytes  |       duration |\n"
         recurrence_slot += "-" * 105 + "\n"
@@ -58,15 +69,19 @@ class Recurrence:
         
         # Print the flows slot
         flows_slot = "\n"
-        flows_slot += "-" * 167 + "\n"
-        flows_slot += "|" + " " * 79 + " Flows" + " " * 79 + "|\n" 
-        flows_slot += "-" * 167 + "\n"
-        flows_slot += "|             src |      sport |             dst |      dport |  nspackges |     sbytes |  nrpackges |     rbytes |  ntpackges |     tbytes |      rtime |   duration |\n"
-        flows_slot += "-" * 167 + "\n"
+        flows_slot += "-" * 222 + "\n"
+        flows_slot += "|" + " " * 107 + " Flows" + " " * 107 + "|\n" 
+        flows_slot += "-" * 222 + "\n"
+        flows_slot += "|      id |  predicted |                error |  score |             src |      sport |             dst |      dport |  nspackges |     sbytes |  nrpackges |     rbytes |  ntpackges |     tbytes |      rtime |   duration |\n"
+        flows_slot += "-" * 222 + "\n"
         flows_slot += "\n".join([str(flow) for flow in self.flows])
-        flows_slot += "\n" + "-" * 167 + "\n"
+        flows_slot += "\n" + "-" * 222 + "\n"
 
         return recurrence_slot + horizontal_line + flows_slot
+    
+    def update_accuracy(self):
+        if self.predictions_count > 0:
+            self.accuracy = (self.hits_count * 100) / self.predictions_count
     
     def add_flow(self, flow: Flow) -> None:
         """
@@ -75,14 +90,74 @@ class Recurrence:
         self.evaluate_flow(flow)
         self.evaluate_stats(flow)
         self.total_flow += 1
-        self.rtime = flow.rtime
+        flow.id = self.total_flow
         self.flows.append(flow)
-
-    def formula(self, flow: Flow) -> float:
-        return 0
+        self.update_accuracy()
 
     def evaluate_flow(self, flow: Flow):
-        pass
+        """
+            Evaluate the flow and set the predicted value
+        """
+        # If the number of flows is iguals or greater than the minimum flows, evaluate de means of the self.MINIMUM_FLOWS last flows
+        if self.total_flow >= self.MINIMUM_FLOWS:
+
+            
+            nspackges = 0
+            sbytes = 0
+            nrpackges = 0
+            rbytes = 0
+            ntpackges = 0
+            tbytes = 0
+            duration = 0
+            
+            # Get the last MINIMUM_FLOWS flows
+            last_flows = self.flows[-self.MINIMUM_FLOWS:]
+
+            # Sum the values
+            for flow_last in last_flows:
+                nspackges += flow_last.nspackges
+                sbytes += flow_last.sbytes
+                nrpackges += flow_last.nrpackges
+                rbytes += flow_last.rbytes
+                ntpackges += flow_last.ntpackges
+                tbytes += flow_last.tbytes
+                duration += flow_last.duration
+
+            # Calculate the averages
+            nspackges /= self.MINIMUM_FLOWS
+            sbytes /= self.MINIMUM_FLOWS
+            nrpackges /= self.MINIMUM_FLOWS
+            rbytes /= self.MINIMUM_FLOWS
+            ntpackges /= self.MINIMUM_FLOWS
+            tbytes /= self.MINIMUM_FLOWS
+            duration /= self.MINIMUM_FLOWS
+
+            # Create a flow with the averages
+            avarege_flow = Flow(self.src, self.sport, self.dst, self.dport, nspackges, sbytes, nrpackges, rbytes, ntpackges, tbytes, self.rtime, duration)
+
+            # Get if is similar or not
+            similar = flow.similarity(avarege_flow, self.percents)
+
+            if similar:
+                if self.score >= self.MINIMUM_SCORE:
+                    flow.predicted = True
+                    self.predictions_count += 1
+                    self.hits_count += 1
+                self.score += 1
+                if self.score > self.MAXIMUM_SCORE:
+                    self.score = self.MAXIMUM_SCORE
+            else:
+                if self.score >= self.MINIMUM_SCORE:
+                    flow.predicted = False
+                    self.predictions_count += 1
+                    self.misses_count += 1
+                self.score -= 1
+                if self.score < 0:
+                    self.score = 0
+            
+        flow.score = self.score
+                
+
 
     def evaluate_stats(self, flow: Flow):
         # Update the averages

@@ -2,11 +2,14 @@ from Models.Flow import Flow
 from Models.Recurrence import Recurrence
 
 class Evaluator:
-    def __init__(self, weights: dict) -> None:
+    def __init__(self, percents: dict, MINIMUM_FLOWS: int, MINIMUM_SCORE: int, MAXIMUM_SCORE: int) -> None:
         '''
             This class is responsible for evaluating the recurrences
         '''
-        self.weights = weights
+        self.percents = percents
+        self.MINIMUM_FLOWS = MINIMUM_FLOWS
+        self.MINIMUM_SCORE = MINIMUM_SCORE
+        self.MAXIMUM_SCORE = MAXIMUM_SCORE
         self.recurrences = {}
         self.destiny_simple_flows = {}
         self.origin_simple_flows = {}
@@ -38,14 +41,14 @@ class Evaluator:
         
         # If the value of the dictionary is in the destiny_simple_flows
         if self.destiny_simple_flows.get(destiny_key):
-            recurrence = Recurrence(flow, destiny_key, self.weights)
+            recurrence = Recurrence(flow, destiny_key, self.percents, self.MINIMUM_FLOWS, self.MINIMUM_SCORE, self.MAXIMUM_SCORE)
             self.recurrences[destiny_key] = recurrence
             self.remove_simples_flows(origin_key, destiny_key)
             return
         
         # If the value of the dictionary is in the origin_simple_flows
         if self.origin_simple_flows.get(origin_key):
-            recurrence = Recurrence(flow, origin_key, self.weights)
+            recurrence = Recurrence(flow, origin_key, self.percents, self.MINIMUM_FLOWS, self.MINIMUM_SCORE, self.MAXIMUM_SCORE)
             self.recurrences[origin_key] = recurrence
             self.remove_simples_flows(origin_key, destiny_key)
             return
