@@ -49,13 +49,21 @@ MINIMUM_SCORE = 7
 MAXIMUM_SCORE = 10
 
 # Percent of flows that will be considered
-PERCENT_FLOWS = 0.2
+PERCENT_FLOWS = 1
+
+# Minimums save file
+MINIMUM_FLOWS_FILE = 10
+MINIMUM_SCORE_FILE = 0
+MINIMUM_HIT_FILE = 0
+MINIMUM_MISS_FILE = 0
+MINIMUM_PREDICTION_FILE = 5
+MINIMUM_ACCURACY_FILE = 95
 
 # Booleans
 MAKE_EVALUATION_TXT = True
 MAKE_EVALUATION_JSON = False
 MAKE_FLOWS = False
-MAKE_GRAPHS = False
+MAKE_GRAPHS = True
 MAKE_ORDERED_FLOWS = False
 
 # Global variables
@@ -92,29 +100,25 @@ def convert_bytes(value, unit):
 
 def make_graphs():
     print("Making graphs...")
-    x = []
-    y = []
+    # Total of hits and misses
+    hits = 0
+    misses = 0
     for recurrence in evaluator.recurrences.values():
-        x.append(recurrence.bytes)
-        y.append(recurrence.ocorrencias)
+        # Percore as recorrencias
+        hits += recurrence.hits_count
+        misses += recurrence.misses_count
 
-    plt.scatter(x, y)
-    plt.xlabel("Total bytes")
-    plt.ylabel("Number of flows")
-    plt.title("Number of flows x Total bytes")
-    plt.savefig(f"{GRAPHS_DIR}/NumeroFluxosQuantidadeBytes.png")
+    accuracy = (hits / (hits + misses)) * 100
 
-    # Histogram of occurrences
-    plt.clf()
-    x = []
-    for recurrence in evaluator.recurrences.values():
-        if recurrence.total_flow >= HIST_BIN_SIZE:
-            x.append(recurrence.total_flow)
-    plt.hist(x, bins=100, edgecolor='black', histtype='bar')
-    plt.xlabel("Total occurrences")
-    plt.ylabel("Number of flows")
-    plt.title("Total occurrences x Number of flows")
-    plt.savefig(f"{GRAPHS_DIR}/HistogramaOcorrencias.png")
+    # Histograma de hits e misses
+    plt.figure(figsize=(10, 5))
+    plt.bar(["Hits", "Misses"], [hits, misses], color=["green", "red"])
+    plt.title("Histogram of Hits and Misses")
+    plt.xlabel("Hits and Misses")
+    plt.ylabel("Quantity")
+    plt.text(0, hits, f"Accuracy: {accuracy:.2f}% - {hits}", ha='center', va='bottom')
+    plt.text(1, misses, f"Loss: {100 - accuracy:.2f}% - {misses}", ha='center', va='bottom')
+    plt.savefig(f"{GRAPHS_DIR}/HistogramaHitAndMisses.png")
 
     print("Graphs made!")
 
@@ -124,7 +128,7 @@ def save_evaluation():
         with open(EVALUATION_TXT_FILE, 'w') as f:
             for recurrence in evaluator.recurrences.values():
                 # Se tiver mais de uma ocorrencia, printa
-                if recurrence.score >= MINIMUM_SCORE:
+                if recurrence.total_flow >= MINIMUM_FLOWS_FILE and recurrence.score >= MINIMUM_SCORE_FILE and recurrence.hits_count >= MINIMUM_HIT_FILE and recurrence.misses_count >= MINIMUM_MISS_FILE and recurrence.predictions_count >= MINIMUM_PREDICTION_FILE and recurrence.accuracy >= MINIMUM_ACCURACY_FILE:
                     f.write("=" * 105 + "\n\n")
                     f.write(str(recurrence))
                     f.write("\n")
@@ -265,5 +269,5 @@ if __name__ == '__main__':
         make_ordered_flows()
     start_evaluation()
     if MAKE_GRAPHS: 
-        make_flows()
+        make_graphs()
     save_evaluation()
