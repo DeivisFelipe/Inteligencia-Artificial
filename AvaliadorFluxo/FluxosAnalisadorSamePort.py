@@ -8,7 +8,6 @@
 
 import matplotlib.pyplot as plt
 from progress.bar import FillingCirclesBar
-from progress.counter import Counter
 import subprocess
 import time
 
@@ -22,7 +21,7 @@ from Models.Flow import Flow
 # Files
 EVALUATION_JSON_FILE = "AvaliadorFluxo/Saida/Avaliacao.json"
 EVALUATION_TXT_FILE = "AvaliadorFluxo/Saida/Avaliacao.txt"
-FLOWS_FILE = "AvaliadorFluxo/Saida/Fluxos.txt"
+FLOWS_FILE = "AvaliadorFluxo/Saida/saida.txt"
 GRAPHS_DIR = "AvaliadorFluxo/Saida/Graficos"
 PATH_TSHARK = "C:/Program Files/Wireshark/tshark.exe"
 PATH_PCAP = 'Datasets/Pcaps/201904091200.pcap'
@@ -31,7 +30,7 @@ SORTED_FLOWS_FILE = "AvaliadorFluxo/Saida/FluxosOrdenados.txt"
 # Plot
 HIST_BIN_SIZE = 10
 
-# percents maximum for the evaluation 0-100
+# percents maximum for the evaluation 0.2 = 20%, 0 - 1
 PERCENT_NSPACKGES = 0.2
 PERCENT_SBYTES = 0.2
 PERCENT_NRPACKGES = 0.2
@@ -50,7 +49,7 @@ MINIMUM_SCORE = 7
 MAXIMUM_SCORE = 10
 
 # Percent of flows that will be considered
-PERCENT_FLOWS = 1
+PERCENT_FLOWS = 0.33 # min: 0.0, max: 1.0
 
 # Minimums save file
 MINIMUM_FLOWS_FILE = 10
@@ -268,7 +267,8 @@ if __name__ == '__main__':
         make_flows()
     if MAKE_ORDERED_FLOWS:
         make_ordered_flows()
-    start_evaluation()
-    if MAKE_GRAPHS: 
-        make_graphs()
-    save_evaluation()
+    if MAKE_EVALUATION_TXT or MAKE_EVALUATION_JSON or MAKE_GRAPHS:
+        start_evaluation()
+        if MAKE_GRAPHS: 
+            make_graphs()
+        save_evaluation()
