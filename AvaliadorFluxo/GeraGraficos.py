@@ -3,7 +3,7 @@ import os
 import time
 import matplotlib.pyplot as plt
 
-ARQUIVO_FLUXOS_ORDENADOS = "AvaliadorFluxo/Saida/FluxosOrdenados.txt"
+ARQUIVO_FLUXOS_ORDENADOS = "AvaliadorFluxo/Saida/FluxosOrdenados-MAWI.txt"
 PASTA_GRAFICOS = "AvaliadorFluxo/Saida/Graficos"
 # PLOT
 QUANTIDADE_FLUXOS_HISTOGRAMA = 10
@@ -90,7 +90,7 @@ def main():
         # duas casas decimais
         intervalosDuracao.append(round(menorDuracao + i * intervaloDuracao, 2))
 
-    print("Duracao intervalos: ", intervalosDuracao)
+    # print("Duracao intervalos: ", intervalosDuracao)
 
     NUMERO_INTERVALOS_BYTES = 60
     intervaloBytes = (maiorBytes - menorBytes) / NUMERO_INTERVALOS_BYTES
@@ -104,7 +104,7 @@ def main():
     # Contador
     contadorDuracao = [0 for i in range(NUMERO_INTERVALOS_DURACAO)]
     contadorBytes = [0 for i in range(NUMERO_INTERVALOS_BYTES)]
-    contadorTamanhoMedio = [0 for i in range(NUMERO_INTERVALOS_DURACAO)]
+    contadorPacotes = [0 for i in range(NUMERO_INTERVALOS_DURACAO)]
 
     bytesSoma = [0 for i in range(NUMERO_INTERVALOS_DURACAO)]
 
@@ -121,7 +121,7 @@ def main():
                 break
 
         contadorDuracao[index] += 1
-        contadorTamanhoMedio[index] += pacotes
+        contadorPacotes[index] += pacotes
         bytesSoma[index] += bytes
 
         index = 0
@@ -137,8 +137,8 @@ def main():
 
     # print("Contador Duracao: ", contadorDuracao)
     # print("Contador Bytes: ", contadorBytes)
-    print("Contador Tamanho Médio: ", contadorTamanhoMedio)
-    print("Duracoes: ", bytesSoma)
+    # print("Contador Tamanho Médio: ", contadorTamanhoMedio)
+    # print("Duracoes: ", bytesSoma)
     
 
     # Cria o gráfico de linha com y em escala logarítmica
@@ -163,11 +163,11 @@ def main():
     # Y igual a tamanho medio
     # Tamanho medio = bytes / pacotes
     for i in range(NUMERO_INTERVALOS_DURACAO):
-        if contadorTamanhoMedio[i] != 0:
-            contadorTamanhoMedio[i] = bytesSoma[i] / contadorTamanhoMedio[i]
-    print("\n", contadorTamanhoMedio)
+        if contadorPacotes[i] != 0:
+            contadorPacotes[i] = bytesSoma[i] / contadorPacotes[i]
+    print("Contador médio de pacotes", contadorPacotes)
     plt.clf()
-    plt.plot(intervalosDuracao, contadorTamanhoMedio) 
+    plt.plot(intervalosDuracao, contadorPacotes) 
     plt.xlabel('Intervalos de duração')
     plt.ylabel('Tamanho médio dos pacotes')
     plt.title('Tamanho médio dos pacotes em relação a duração')
