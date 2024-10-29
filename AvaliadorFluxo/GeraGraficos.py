@@ -1,6 +1,3 @@
-import subprocess
-import os
-import time
 import matplotlib.pyplot as plt
 
 ARQUIVO_FLUXOS_ORDENADOS = "AvaliadorFluxo/Saida/FluxosOrdenados-MAWI.txt"
@@ -10,10 +7,10 @@ QUANTIDADE_FLUXOS_HISTOGRAMA = 10
 
 def main():
     fluxos = []
-    maiorDuracao = 0
-    menorDuracao = 9999999999999999
-    maiorBytes = 0
-    menorBytes = 9999999999999999
+    maior_duracao = 0
+    menor_duracao = 9999999999999999
+    maior_bytes = 0
+    menor_bytes = 9999999999999999
     # Lê o arquivo de fluxos
     with open(ARQUIVO_FLUXOS_ORDENADOS, 'r') as f:
         linhas = f.readlines()
@@ -22,17 +19,27 @@ def main():
             # Separa a linha por espaços
             partes = linha.split()
             # Pega o src e a sport
-            srcPort = partes[0].split(":")
-            src = srcPort[0]
-            sport = srcPort[1]
+            src_port = partes[0].split(":")
+            if len(src_port) == 2:
+                src = src_port[0]
+                sport = src_port[1]
+            else:
+                # é ipv6
+                sport = src_port[-1]
+                # src é tudo menos a porta e os dois pontos
+                src = partes[0][:-len(sport) - 1]
 
-            # Se for ipv6, pula (srcPort tem mais de 3 elementos)
-            if len(srcPort) > 2:
-                continue
             # Pega o dst e a dport
-            dstPort = partes[2].split(":")
-            dst = dstPort[0]
-            dport = dstPort[1]
+            dst_port = partes[2].split(":")
+            if len(dst_port) == 2:
+                dst = dst_port[0]
+                dport = dst_port[1]
+            else:
+                # é ipv6
+                dport = dst_port[-1]
+                # dst é tudo menos a porta e os dois pontos
+                dst = partes[2][:-len(dport) - 1]
+                
             # Pega a quantidade de bytes enviados e recebidos, verifica se é em bytes, kB, MB ou GB
             nspackges = int(partes[3])
             sbytes = int(partes[4])
@@ -67,37 +74,37 @@ def main():
             fluxos.append((src, sport, dst, dport, nspackges, sbytes, nrpackges, rbytes, ntpackges, tbytes, rtime, duration))
 
             # Atualiza a maior e menor duração
-            if duration > maiorDuracao:
-                maiorDuracao = duration
-            if duration < menorDuracao:
-                menorDuracao = duration
+            if duration > maior_duracao:
+                maior_duracao = duration
+            if duration < menor_duracao:
+                menor_duracao = duration
 
             # Atualiza a maior e menor quantidade de bytes
-            if tbytes > maiorBytes:
-                maiorBytes = tbytes
-            if tbytes < menorBytes:
-                menorBytes = tbytes
+            if tbytes > maior_bytes:
+                maior_bytes = tbytes
+            if tbytes < menor_bytes:
+                menor_bytes = tbytes
     print("Total de fluxos: ", len(fluxos))
-    print("Maior duração: ", maiorDuracao)
-    print("Menor duração: ", menorDuracao)
-    print("Maior quantidade de bytes: ", maiorBytes)
-    print("Menor quantidade de bytes: ", menorBytes)
+    print("Maior duração: ", maior_duracao)
+    print("Menor duração: ", menor_duracao)
+    print("Maior quantidade de bytes: ", maior_bytes)
+    print("Menor quantidade de bytes: ", menor_bytes)
 
     NUMERO_INTERVALOS_DURACAO = 60
-    intervaloDuracao = (maiorDuracao - menorDuracao) / NUMERO_INTERVALOS_DURACAO
-    intervalosDuracao = []
+    intervalo_duracao = (maior_duracao - menor_duracao) / NUMERO_INTERVALOS_DURACAO
+    intervalos_duracao = []
     for i in range(NUMERO_INTERVALOS_DURACAO):
         # duas casas decimais
-        intervalosDuracao.append(round(menorDuracao + i * intervaloDuracao, 2))
+        intervalos_duracao.append(round(menor_duracao + i * intervalo_duracao, 2))
 
     # print("Duracao intervalos: ", intervalosDuracao)
 
     NUMERO_INTERVALOS_BYTES = 60
-    intervaloBytes = (maiorBytes - menorBytes) / NUMERO_INTERVALOS_BYTES
-    intervalosBytes = []
+    intervalo_bytes = (maior_bytes - menor_bytes) / NUMERO_INTERVALOS_BYTES
+    intervalos_bytes = []
     for i in range(NUMERO_INTERVALOS_BYTES):
         # duas casas decimais
-        intervalosBytes.append(round(menorBytes + i * intervaloBytes, 2))
+        intervalos_bytes.append(round(menor_bytes + i * intervalo_bytes, 2))
 
     # print("Bytes intervalos: ", intervalosBytes)
 
@@ -115,7 +122,7 @@ def main():
         bytes = fluxo[9]
         pacotes = fluxo[8]
         for i in range(NUMERO_INTERVALOS_DURACAO):
-            if duracao >= intervalosDuracao[i]:
+            if duracao >= intervalos_duracao[i]:
                 index = i
             else:
                 break
@@ -128,21 +135,15 @@ def main():
         
         # descobre em qual intervalo está
         for i in range(NUMERO_INTERVALOS_BYTES):
-            if bytes >= intervalosBytes[i]:
+            if bytes >= intervalos_bytes[i]:
                 index = i
             else:
                 break
 
         contadorBytes[index] += 1
-
-    # print("Contador Duracao: ", contadorDuracao)
-    # print("Contador Bytes: ", contadorBytes)
-    # print("Contador Tamanho Médio: ", contadorTamanhoMedio)
-    # print("Duracoes: ", bytesSoma)
     
-
     # Cria o gráfico de linha com y em escala logarítmica
-    plt.plot(intervalosDuracao, contadorDuracao)
+    plt.plot(intervalos_duracao, contadorDuracao)
     plt.yscale('log')
     plt.xlabel('Intervalos de duração')
     plt.ylabel('Quantidade de fluxos')
@@ -151,7 +152,7 @@ def main():
 
     # Cria o gráfico de linha com y em escala logarítmica
     plt.clf()
-    plt.plot(intervalosBytes, contadorBytes)
+    plt.plot(intervalos_bytes, contadorBytes)
     plt.yscale('log')
     plt.xlabel('Intervalos de bytes')
     plt.ylabel('Quantidade de fluxos')
@@ -162,16 +163,26 @@ def main():
     # X igual a duracao 
     # Y igual a tamanho medio
     # Tamanho medio = bytes / pacotes
+    tamanho_medio = []
     for i in range(NUMERO_INTERVALOS_DURACAO):
         if contadorPacotes[i] != 0:
-            contadorPacotes[i] = bytesSoma[i] / contadorPacotes[i]
-    print("Contador médio de pacotes", contadorPacotes)
+            tamanho_medio.append(bytesSoma[i] / contadorPacotes[i])
     plt.clf()
-    plt.plot(intervalosDuracao, contadorPacotes) 
+    plt.plot(intervalos_duracao, tamanho_medio) 
     plt.xlabel('Intervalos de duração')
     plt.ylabel('Tamanho médio dos pacotes')
     plt.title('Tamanho médio dos pacotes em relação a duração')
     plt.savefig(PASTA_GRAFICOS + "/TamanhoMedioPacotes.png")
+
+    # Número total de pacotes
+    total_pacotes = sum(contadorPacotes)
+    print("Total de pacotes: ", total_pacotes)
+    # Número total de bytes
+    total_bytes = sum(bytesSoma)
+    print("Total de bytes: ", total_bytes)
+    # Tamanho médio dos pacotes
+    tamanho_medio = total_bytes / total_pacotes
+    print("Tamanho médio dos pacotes: ", tamanho_medio)
     
     
 

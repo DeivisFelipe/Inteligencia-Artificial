@@ -1,22 +1,23 @@
 class FluxoFile:
-    def __init__(self, line):
+    def __init__(self, line, permitir_ipv6=False):
         # Estrutura da linha:
         # <IP1>:<Porta1> <-> <IP2>:<Porta2> <PacotesIP1> <BytesIP1> <sizeIP1> <PacotesIP2> <BytesIP2> <sizeIP2> <PacotesTotal3> <BytesTotal3> <sizeTotal3> <Inicio> <Duracao>
         # Ex:
         # 23.36.44.166:443 <-> 163.33.141.15:52079          0 0 bytes      36136 2385012 bytes      36136 2385012 bytes 0,000000  71,916941
         data = line.split() # Separa a linha em uma lista de strings
 
-        # Verifica se a linha tem ipv6, se tiver ativa uma flag
-        if len(data[0].split(":")) > 2:
-            self.ipv6 = True
-            return
-        else:
-            self.ipv6 = False
+        if not permitir_ipv6:
+            # Verifica se a linha tem ipv6, se tiver ativa uma flag
+            if len(data[0].split(":")) > 2:
+                self.ipv6 = True
+                return
+            else:
+                self.ipv6 = False
 
-        self.src = self.ip_to_int(data[0].split(":")[0])
-        self.src_port = int(data[0].split(":")[1])
-        self.dst = self.ip_to_int(data[2].split(":")[0])
-        self.dst_port = int(data[2].split(":")[1])
+        self.src = self.ip_to_int(data[0].split(":")[0]) if not permitir_ipv6 else self.get_ip(data[0])
+        self.src_port = int(data[0].split(":")[1]) if not permitir_ipv6 else int(data[0].split(":")[-1])
+        self.dst = self.ip_to_int(data[2].split(":")[0]) if not permitir_ipv6 else self.get_ip(data[2])
+        self.dst_port = int(data[2].split(":")[1]) if not permitir_ipv6 else int(data[2].split(":")[-1])
         self.npackets_src = int(data[3])
         self.nbytes_src = int(data[4])
         self.size_src = data[5]
@@ -55,6 +56,13 @@ class FluxoFile:
     # Converte o ip para inteiro
     def ip_to_int(self, ip):
         return int(''.join([f'{int(num):08b}' for num in ip.split('.')]), 2)
+    
+    # IP port to IP String
+    def get_ip(self, data):
+        port = data.split(":")[-1]
+        # IP tudo menos a porta e os dois pontos
+        ip = data[:-len(port) - 1]
+        return ip
     
     # Converte o objeto para um dicionário
     def to_dict(self):
