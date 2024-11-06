@@ -2,78 +2,98 @@ import pymongo
 import time
 from FluxoFile import FluxoFile
 
-#  Hiperparâmetros
-FILE_FLUXOS = "AvaliadorFluxo\caida2.txt"
+# Hiperparâmetros
+FILE_FLUXOS = "AvaliadorFluxo/caida2.txt"
 DATA_BASE_NAME = "fluxos_database"
 COLLECTION_NAME = "caida_collection"
-TIMEOUT_LIMIT = 60 * 1000 * 1000 # 60 segundos
-OFFSET = 60 * 1000 * 1000 # 60 segundos
+TIMEOUT_LIMIT = 50 * 1000  # 60 segundos em milissegundos
+OFFSET = 60 * 1000         # 60 segundos em milissegundos
 
 # Conecta ao MongoDB
 mongo_client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = mongo_client[DATA_BASE_NAME]
 collection = db[COLLECTION_NAME]
 
-# Pega o tempo inicial
-start_time = time.time()
+# Cria índice para melhorar a busca
+collection.create_index([("src", pymongo.ASCENDING),
+                         ("src_port", pymongo.ASCENDING),
+                         ("dst", pymongo.ASCENDING),
+                         ("dst_port", pymongo.ASCENDING)])
 
-# Printa o início do processo
+# Carrega os fluxos em memória
+with open(FILE_FLUXOS, "r") as file:
+    lines = file.readlines()
+
+# Tempo inicial
+start_time = time.time()
 print("Inserindo os fluxos no banco de dados...")
 print("Arquivo:", FILE_FLUXOS)
 print("Base de dados:", db.name)
 print("Coleção:", collection.name)
 print("Horário:", time.strftime("%H:%M:%S", time.localtime(start_time)))
 
-# Abre o arquivo de fluxos
-with open(FILE_FLUXOS, "r") as file:
-    for line in file:
+# Prepara operações em lote
+bulk_operations = []
 
-        flow = FluxoFile(line, True)
+# Estatisticas
+total_inserted = 0
+total_updated = 0
+time_to_end_less_than_zero = 0
 
-        # Faz uma query para ver se o fluxo já existe no banco de dados
-        query = {
-            "src": flow.src,
-            "src_port": flow.src_port,
-            "dst": flow.dst,
-            "dst_port": flow.dst_port,
-        }
+for line in lines:
+    flow = FluxoFile(line, True)
+    query = {
+        "src": flow.src,
+        "src_port": flow.src_port,
+        "dst": flow.dst,
+        "dst_port": flow.dst_port,
+    }
 
-        # Procura o fluxo no banco de dados ordenando pelo start
-        result = collection.find_one(query, sort=[("start", pymongo.DESCENDING)])
+    # Busca o fluxo mais recente com os mesmos parâmetros
+    result = collection.find_one(query, sort=[("start", pymongo.DESCENDING)])
 
-        insert = False
-        if result:
-            final = result['start'] + result['duration']
-            time_to_end = (OFFSET + flow.start) - final 
-            if time_to_end < 0:
-                insert = True
-            else:
-                if time_to_end > TIMEOUT_LIMIT:
-                    print("Timeout")
-                    insert = True
-            
-        if insert:
-            collection.insert_one(flow.to_dict())
+    insert = False  # Controle de inserção
+
+    if result:
+        final = result['start'] + result['duration']
+        time_to_end = (OFFSET + flow.start) - final
+
+        if time_to_end < 0:
+            insert = True
+            time_to_end_less_than_zero += 1
+        elif time_to_end > TIMEOUT_LIMIT:
+            insert = True
         else:
-            # Atualiza o fluxo já existe para ter a duração correta
-            # Calcula a nova duração
+            total_updated += 1
+            # Se não deve inserir, atualiza a duração do fluxo existente
             new_duration = flow.start + flow.duration + OFFSET
-
-            # Atualiza o fluxo
-            collection.update_one(
-                query,
-                {
-                    "$set": {
-                        "duration": new_duration
-                    }
-                }
+            bulk_operations.append(
+                pymongo.UpdateOne(
+                    query,
+                    {"$set": {"duration": new_duration}}
+                )
             )
+    else:
+        # Não encontrou fluxo correspondente, deve inserir o novo fluxo
+        insert = True
 
+    if insert:
+        total_inserted += 1
+        # Atualiza o tempo de início do fluxo
+        flow.start += OFFSET
+        bulk_operations.append(
+            pymongo.InsertOne(flow.to_dict())
+        )
 
-# Pega o tempo final
-final_time = time.time()
+# Executa operações em lote
+if bulk_operations:
+    collection.bulk_write(bulk_operations)
 
 # Calcula o tempo de execução
-execution_time = final_time - start_time
-
+execution_time = time.time() - start_time
 print(f"Tempo de execução: {execution_time} segundos")
+
+# Estatísticas
+print("Total de fluxos inseridos:", total_inserted)
+print("Total de fluxos atualizados:", total_updated)
+print("Total de fluxos com tempo negativo:", time_to_end_less_than_zero)
