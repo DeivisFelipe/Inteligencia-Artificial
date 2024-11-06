@@ -3,7 +3,7 @@ import pymongo
 import time
 
 PATH_GRAPHS = "AvaliadorFluxo/Saida/Graficos/AnaliseCaida"
-NAME = "Caida01"
+NAME = "Caida 01 MongoDB"
 NUMBER_BINS_HISTOGRAMA = 60
 DB_NAME = "fluxos_database"
 COLLECTION_NAME = "caida_collection"
@@ -36,83 +36,65 @@ def main():
     for i in range(NUMBER_BINS_HISTOGRAMA):
         bytes_intervals.append(round(smaller_bytes + i * bytes_interval))
 
-    # Contador
-    contadorDuracao = [0 for i in range(NUMBER_BINS_HISTOGRAMA)]
-    contadorBytes = [0 for i in range(NUMBER_BINS_HISTOGRAMA)]
-    contadorPacotes = [0 for i in range(NUMBER_BINS_HISTOGRAMA)]
+    # Contadores
+    duration_counters = [0 for i in range(NUMBER_BINS_HISTOGRAMA)]
+    bytes_counters = [0 for i in range(NUMBER_BINS_HISTOGRAMA)]
+    packets_counters = [0 for i in range(NUMBER_BINS_HISTOGRAMA)]
+    total_bytes = [0 for i in range(NUMBER_BINS_HISTOGRAMA)]
 
-    bytesSoma = [0 for i in range(NUMBER_BINS_HISTOGRAMA)]
+    duration_histogram(collection, duration_intervals, duration_counters)
 
-    # Conta quantos fluxos estão em cada intervalo
-    for fluxo in fluxos:
-        index = 0
-        duracao = fluxo[11]
-        bytes = fluxo[9]
-        pacotes = fluxo[8]
-        for i in range(NUMBER_BINS_HISTOGRAMA):
-            if duracao >= duration_intervals[i]:
-                index = i
-            else:
-                break
+    # # Cria o gráfico de linha com y em escala logarítmica
+    # plt.clf()
+    # plt.plot(intervalos_bytes, contadorBytes)
+    # plt.yscale('log')
+    # plt.xlabel('Intervalos de bytes')
+    # plt.ylabel('Quantidade de fluxos')
+    # plt.title('Histograma de bytes dos fluxos - ' + NAME)
+    # plt.savefig(PATH_GRAPHS + "/HistogramaBytes.png")
 
-        contadorDuracao[index] += 1
-        contadorPacotes[index] += pacotes
-        bytesSoma[index] += bytes
+    # # Tamanho médio dos pacotes
+    # # X igual a duracao 
+    # # Y igual a tamanho medio
+    # # Tamanho medio = bytes / pacotes
+    # tamanho_medio = []
+    # for i in range(NUMERO_INTERVALOS_DURACAO):
+    #     if contadorPacotes[i] != 0:
+    #         tamanho_medio.append(bytesSoma[i] / contadorPacotes[i])
+    # plt.clf()
+    # plt.plot(intervalos_duracao, tamanho_medio) 
+    # plt.xlabel('Intervalos de duração')
+    # plt.ylabel('Tamanho médio dos pacotes')
+    # plt.title('Tamanho médio dos pacotes em relação a duração - ' + NAME)
+    # plt.savefig(PATH_GRAPHS + "/TamanhoMedioPacotes.png")
 
-        index = 0
-        
-        # descobre em qual intervalo está
-        for i in range(NUMBER_BINS_HISTOGRAMA):
-            if bytes >= intervalos_bytes[i]:
-                index = i
-            else:
-                break
-
-        contadorBytes[index] += 1
+    # # Número total de pacotes
+    # total_pacotes = sum(contadorPacotes)
+    # print("Total de pacotes: ", total_pacotes)
+    # # Número total de bytes
+    # total_bytes = sum(bytesSoma)
+    # print("Total de bytes: ", total_bytes)
+    # # Tamanho médio dos pacotes
+    # tamanho_medio = total_bytes / total_pacotes
+    # print("Tamanho médio dos pacotes: ", tamanho_medio)
     
+
+
+# Greficos
+
+# Histograma de duração dos fluxos
+def duration_histogram(collection, duration_intervals, duration_counters):
+    for i in range(NUMBER_BINS_HISTOGRAMA):
+        query = {"duration": {"$gte": duration_intervals[i], "$lt": duration_intervals[i + 1]}}
+        duration_counters[i] = collection.count_documents(query)
+
     # Cria o gráfico de linha com y em escala logarítmica
-    plt.plot(intervalos_duracao, contadorDuracao)
+    plt.plot(duration_intervals, duration_counters)
     plt.yscale('log')
     plt.xlabel('Intervalos de duração')
     plt.ylabel('Quantidade de fluxos')
     plt.title('Histograma de duração dos fluxos - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/HistogramaDuracao.png")
-
-    # Cria o gráfico de linha com y em escala logarítmica
-    plt.clf()
-    plt.plot(intervalos_bytes, contadorBytes)
-    plt.yscale('log')
-    plt.xlabel('Intervalos de bytes')
-    plt.ylabel('Quantidade de fluxos')
-    plt.title('Histograma de bytes dos fluxos - ' + NAME)
-    plt.savefig(PATH_GRAPHS + "/HistogramaBytes.png")
-
-    # Tamanho médio dos pacotes
-    # X igual a duracao 
-    # Y igual a tamanho medio
-    # Tamanho medio = bytes / pacotes
-    tamanho_medio = []
-    for i in range(NUMERO_INTERVALOS_DURACAO):
-        if contadorPacotes[i] != 0:
-            tamanho_medio.append(bytesSoma[i] / contadorPacotes[i])
-    plt.clf()
-    plt.plot(intervalos_duracao, tamanho_medio) 
-    plt.xlabel('Intervalos de duração')
-    plt.ylabel('Tamanho médio dos pacotes')
-    plt.title('Tamanho médio dos pacotes em relação a duração - ' + NAME)
-    plt.savefig(PATH_GRAPHS + "/TamanhoMedioPacotes.png")
-
-    # Número total de pacotes
-    total_pacotes = sum(contadorPacotes)
-    print("Total de pacotes: ", total_pacotes)
-    # Número total de bytes
-    total_bytes = sum(bytesSoma)
-    print("Total de bytes: ", total_bytes)
-    # Tamanho médio dos pacotes
-    tamanho_medio = total_bytes / total_pacotes
-    print("Tamanho médio dos pacotes: ", tamanho_medio)
-    
-    
 
 if __name__ == '__main__':
     start_time = time.time()
