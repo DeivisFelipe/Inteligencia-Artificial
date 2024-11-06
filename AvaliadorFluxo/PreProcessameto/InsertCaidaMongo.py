@@ -6,7 +6,7 @@ from FluxoFile import FluxoFile
 PERMITIR_IPV6 = True
 BATCH_SIZE = 100000
 
-file_name = "AvaliadorFluxo/Saida/FluxosOrdenados-Caida01-Tshark.txt"
+file_name = "AvaliadorFluxo/Saida/FluxosOrdenados-Caida01.txt"
 
 mongo_client = pymongo.MongoClient("mongodb://localhost:27017/")
 

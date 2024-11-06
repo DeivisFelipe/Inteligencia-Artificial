@@ -80,6 +80,10 @@ class FluxoFile:
             "start": self.start,
             "duration": self.duration
         }
+    
+    def __str__(self):
+        # Printa cada atributo do objeto em uma linha
+        return "\n".join([f"{key}: {value}" for key, value in self.__dict__.items()])
 
 
 

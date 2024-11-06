@@ -3,10 +3,10 @@ import time
 from FluxoFile import FluxoFile
 
 # Hiperparâmetros
-FILE_FLUXOS = "AvaliadorFluxo/caida2.txt"
+FILE_FLUXOS = "AvaliadorFluxo/Saida/FluxosOrdenados-Caida01.txt"
 DATA_BASE_NAME = "fluxos_database"
 COLLECTION_NAME = "caida_collection"
-TIMEOUT_LIMIT = 50 * 1000  # 60 segundos em milissegundos
+TIMEOUT_LIMIT = 10 * 1000  # 10 segundos em milissegundos
 OFFSET = 60 * 1000         # 60 segundos em milissegundos
 
 # Conecta ao MongoDB
@@ -40,8 +40,14 @@ total_inserted = 0
 total_updated = 0
 time_to_end_less_than_zero = 0
 
+# Dados Exemplos
+last_update_flow = None
+last_new_flow_on_update = None
+last_flow = None
+
 for line in lines:
     flow = FluxoFile(line, True)
+    last_flow = flow
     query = {
         "src": flow.src,
         "src_port": flow.src_port,
@@ -65,8 +71,10 @@ for line in lines:
             insert = True
         else:
             total_updated += 1
+            last_update_flow = result
+            last_new_flow_on_update = flow
             # Se não deve inserir, atualiza a duração do fluxo existente
-            new_duration = flow.start + flow.duration + OFFSET
+            new_duration = (OFFSET - result['start']) + (flow.start + flow.duration)
             bulk_operations.append(
                 pymongo.UpdateOne(
                     query,
@@ -94,6 +102,18 @@ execution_time = time.time() - start_time
 print(f"Tempo de execução: {execution_time} segundos")
 
 # Estatísticas
+print("Total de fluxos:", len(lines))
 print("Total de fluxos inseridos:", total_inserted)
 print("Total de fluxos atualizados:", total_updated)
 print("Total de fluxos com tempo negativo:", time_to_end_less_than_zero)
+
+# Exibe os últimos fluxos inseridos e atualizados
+print("========================================")
+print("Último fluxo inserido:")
+print(last_flow)
+print("========================================")
+print("Último fluxo atualizado:")
+print(last_update_flow)
+print("========================================")
+print("Novo fluxo no último update:")
+print(last_new_flow_on_update)
