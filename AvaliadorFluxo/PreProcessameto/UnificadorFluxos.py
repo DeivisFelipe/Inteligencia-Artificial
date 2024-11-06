@@ -6,7 +6,7 @@ from FluxoFile import FluxoFile
 FILE_FLUXOS = "AvaliadorFluxo/Saida/FluxosOrdenados-Caida01.txt"
 DATA_BASE_NAME = "fluxos_database"
 COLLECTION_NAME = "caida_collection"
-TIMEOUT_LIMIT = 10 * 1000  # 10 segundos em milissegundos
+TIMEOUT_LIMIT = 20 * 1000  # 15 segundos em milissegundos
 OFFSET = 60 * 1000         # 60 segundos em milissegundos
 
 # Conecta ao MongoDB

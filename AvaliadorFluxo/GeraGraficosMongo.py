@@ -43,15 +43,7 @@ def main():
     total_bytes = [0 for i in range(NUMBER_BINS_HISTOGRAMA)]
 
     duration_histogram(collection, duration_intervals, duration_counters)
-
-    # # Cria o gráfico de linha com y em escala logarítmica
-    # plt.clf()
-    # plt.plot(intervalos_bytes, contadorBytes)
-    # plt.yscale('log')
-    # plt.xlabel('Intervalos de bytes')
-    # plt.ylabel('Quantidade de fluxos')
-    # plt.title('Histograma de bytes dos fluxos - ' + NAME)
-    # plt.savefig(PATH_GRAPHS + "/HistogramaBytes.png")
+    bytes_histogram(collection, bytes_intervals, bytes_counters)
 
     # # Tamanho médio dos pacotes
     # # X igual a duracao 
@@ -84,17 +76,44 @@ def main():
 
 # Histograma de duração dos fluxos
 def duration_histogram(collection, duration_intervals, duration_counters):
+    print("*" * 50)
+    print("Gerando histograma de duração dos fluxos...")
     for i in range(NUMBER_BINS_HISTOGRAMA):
-        query = {"duration": {"$gte": duration_intervals[i], "$lt": duration_intervals[i + 1]}}
+        if i == NUMBER_BINS_HISTOGRAMA - 1:
+            query = {"duration": {"$gte": duration_intervals[i]}}
+        else:
+            query = {"duration": {"$gte": duration_intervals[i], "$lt": duration_intervals[i + 1]}}
         duration_counters[i] = collection.count_documents(query)
 
-    # Cria o gráfico de linha com y em escala logarítmica
-    plt.plot(duration_intervals, duration_counters)
-    plt.yscale('log')
+    # Cria o gráfico de histograma com y em escala logarítmica
+    plt.figure(figsize=(10, 5))
+    plt.bar(duration_intervals, duration_counters, color="blue", width=(duration_intervals[1] - duration_intervals[0]) * 0.8)
     plt.xlabel('Intervalos de duração')
     plt.ylabel('Quantidade de fluxos')
     plt.title('Histograma de duração dos fluxos - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/HistogramaDuracao.png")
+    print("Histograma de duração dos fluxos gerado com sucesso!")
+
+def bytes_histogram(collection, bytes_intervals, bytes_counters):
+    print("*" * 50)
+    print("Gerando histograma de bytes dos fluxos...")
+    for i in range(NUMBER_BINS_HISTOGRAMA):
+        if i == NUMBER_BINS_HISTOGRAMA - 1:
+            query = {"nbytes_total": {"$gte": bytes_intervals[i]}}
+        else:
+            query = {"nbytes_total": {"$gte": bytes_intervals[i], "$lt": bytes_intervals[i + 1]}}
+        bytes_counters[i] = collection.count_documents(query)
+
+    # Cria o gráfico de histograma com y em escala logarítmica
+    plt.figure(figsize=(10, 5))
+    plt.bar(bytes_intervals, bytes_counters, color="blue", width=(bytes_intervals[1] - bytes_intervals[0]) * 0.8)
+    plt.yscale('log')
+    plt.xlabel('Intervalos de bytes')
+    plt.ylabel('Quantidade de fluxos')
+    plt.title('Histograma de bytes dos fluxos - ' + NAME)
+    plt.savefig(PATH_GRAPHS + "/HistogramaBytes.png")
+    plt.show()  # Exibe o gráfico durante o desenvolvimento
+    print("Histograma de bytes dos fluxos gerado com sucesso!")
 
 if __name__ == '__main__':
     start_time = time.time()

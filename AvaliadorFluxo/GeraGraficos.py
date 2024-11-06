@@ -184,7 +184,6 @@ def main():
     tamanho_medio = total_bytes / total_pacotes
     print("Tamanho médio dos pacotes: ", tamanho_medio)
     
-    
 
 if __name__ == '__main__':
     main()
