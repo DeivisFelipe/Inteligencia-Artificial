@@ -2,8 +2,8 @@
 # Descrição: Baixa os arquivos pcap de 2019 da CAIDA
 
 url="https://data.caida.org/datasets/passive-2019/equinix-nyc/20190117-130000.UTC/"
-user="deivis.guerreiro@acad.ufsm.br"
-password="#BACK123bone@"
+user=""
+password=""
 
 # Deleta o index.html
 rm index.html
