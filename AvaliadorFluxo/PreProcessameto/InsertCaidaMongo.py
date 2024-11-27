@@ -4,7 +4,7 @@ from FluxoFile import FluxoFile
 
 # Hiperparâmetros
 PERMITIR_IPV6 = True
-BATCH_SIZE = 100000
+BATCH_SIZE = 1000000
 
 file_name = "AvaliadorFluxo/Saida/FluxosOrdenados-Caida01.txt"
 
@@ -44,6 +44,7 @@ with open(file_name, "r") as file:
         if len(batch) == BATCH_SIZE:
             collection.insert_many(batch)
             batch = []
+            print(f"Fluxos inseridos: {BATCH_SIZE}")
 
     # Insere o restante dos fluxos
     if batch:

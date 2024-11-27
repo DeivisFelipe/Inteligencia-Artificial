@@ -2,11 +2,11 @@ import matplotlib.pyplot as plt
 import pymongo
 import time
 
-PATH_GRAPHS = "AvaliadorFluxo/Saida/Graficos/AnaliseCaida"
-NAME = "Caida 01 MongoDB"
+PATH_GRAPHS = "AvaliadorFluxo/Saida/Graficos/AnaliseMawi"
+NAME = "MAWI MongoDB"
 NUMBER_BINS_HISTOGRAMA = 60
 DB_NAME = "fluxos_database"
-COLLECTION_NAME = "caida_collection"
+COLLECTION_NAME = "mawi_collection"
 
 def main():
     # Conecta ao MongoDB
@@ -20,8 +20,8 @@ def main():
     bigger_bytes = collection.find_one(sort=[("nbytes_total", pymongo.DESCENDING)])["nbytes_total"]
     smaller_bytes = collection.find_one(sort=[("nbytes_total", pymongo.ASCENDING)])["nbytes_total"]
 
-    print("Maior duração: ", bigger_duration)
-    print("Menor duração: ", smaller_duration)
+    print("Maior duracao: ", bigger_duration)
+    print("Menor duracao: ", smaller_duration)
     print("Maior quantidade de bytes: ", bigger_bytes)
     print("Menor quantidade de bytes: ", smaller_bytes)
 
@@ -61,7 +61,7 @@ def main():
 # Histograma de duração dos fluxos
 def duration_histogram(collection, duration_intervals, flows_by_duration_counters, packets_by_duration_counters, total_bytes_by_duration_counters):
     print("*" * 50)
-    print("Gerando histograma de duração dos fluxos...")
+    print("Gerando histograma de duracao dos fluxos...")
     for i in range(NUMBER_BINS_HISTOGRAMA):
         if i == NUMBER_BINS_HISTOGRAMA - 1:
             query = {"duration": {"$gte": duration_intervals[i]}}
@@ -98,7 +98,7 @@ def duration_histogram(collection, duration_intervals, flows_by_duration_counter
     plt.ylabel('Quantidade de fluxos')
     plt.title('Quantidade de fluxos por duração - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/NumeroDeFluxosPorDuracaoBarra.png")
-    print("Quantidade de fluxos por duração gerado com sucesso!")
+    print("Quantidade de fluxos por duracao gerado com sucesso!")
 
 def bytes_histogram(collection, bytes_intervals, flows_by_bytes_counters):
     print("*" * 50)
@@ -131,7 +131,7 @@ def bytes_histogram(collection, bytes_intervals, flows_by_bytes_counters):
 
 def average_packet_size_by_duration_histogram(duration_intervals, packets_by_duration_counters, total_bytes_by_duration_counters):
     print("*" * 50)
-    print("Gerando histograma de tamanho médio dos pacotes por duração...")
+    print("Gerando histograma de tamanho medio dos pacotes por duracao...")
     tamanho_medio = []
     for i in range(NUMBER_BINS_HISTOGRAMA):
         if packets_by_duration_counters[i] != 0:
@@ -154,7 +154,7 @@ def average_packet_size_by_duration_histogram(duration_intervals, packets_by_dur
     plt.ylabel('Tamanho médio dos pacotes')
     plt.title('Tamanho médio dos pacotes em relação a duração - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/TamanhoMedioPacotesPorDuracaoBarra.png")
-    print("Histograma de tamanho médio dos pacotes por duração gerado com sucesso!")
+    print("Histograma de tamanho medio dos pacotes por duracao gerado com sucesso!")
 
 if __name__ == '__main__':
     start_time = time.time()

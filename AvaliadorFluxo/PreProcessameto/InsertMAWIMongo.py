@@ -4,20 +4,20 @@ from FluxoFile import FluxoFile
 
 # Hiperparâmetros
 PERMITIR_IPV6 = True
-BATCH_SIZE = 100000
+BATCH_SIZE = 1000000
 
-file_name = "AvaliadorFluxo/Saida/FluxosOrdenados-MAWI.txt"
+file_name = "../large-pcap-analyzer/caidateste.txt"
 
 mongo_client = pymongo.MongoClient("mongodb://localhost:27017/")
 
-db = mongo_client["fluxos_database"] # Cria a base de dados "fluxos_database" se ela nÃ£o existir
+db = mongo_client["fluxos_database"] # Cria a base de dados "fluxos_database" se ela não existir
 
-collection = db["mawi_collection"] # Cria a coleÃ§Ã£o "mawi_collection" se ela nÃ£o existir
+collection = db["mawi_collection"] # Cria a coleção "mawi_collection" se ela não existir
 
 # Pega o tempo inicial
 start_time = time.time()
 
-# Printa o inÃ­cio do processo
+# Printa o início do processo
 print("Inserindo os fluxos no banco de dados...")
 print("Arquivo:", file_name)
 print("Base de dados:", db.name)
@@ -34,16 +34,17 @@ with open(file_name, "r") as file:
         if not PERMITIR_IPV6 and fluxo.ipv6:
             continue
 
-        # Cria um dicionÃ¡rio com os dados do fluxo
+        # Cria um dicionário com os dados do fluxo
         fluxo_dict = fluxo.to_dict()
 
-        # Adiciona o dicionÃ¡rio ao lote
+        # Adiciona o dicionário ao lote
         batch.append(fluxo_dict)
 
-        # Insere o dicionÃ¡rio na coleÃ§Ã£o
+        # Insere o dicionário na coleção
         if len(batch) == BATCH_SIZE:
             collection.insert_many(batch)
             batch = []
+            print(f"Fluxos inseridos: {BATCH_SIZE}")
 
     # Insere o restante dos fluxos
     if batch:
@@ -52,7 +53,7 @@ with open(file_name, "r") as file:
 # Pega o tempo final
 final_time = time.time()
 
-# Calcula o tempo de execuÃ§Ã£o
+# Calcula o tempo de execução
 execution_time = final_time - start_time
 
-print(f"Tempo de execuÃ§Ã£o: {execution_time} segundos")
+print(f"Tempo de execução: {execution_time} segundos")
