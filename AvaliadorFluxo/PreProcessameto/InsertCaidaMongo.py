@@ -6,7 +6,7 @@ from FluxoFile import FluxoFile
 PERMITIR_IPV6 = True
 BATCH_SIZE = 1000000
 
-file_name = "AvaliadorFluxo/Saida/FluxosOrdenados-Caida01.txt"
+file_name = "/home/deivis/Projetos/large-pcap-analyzer-2/caida01.txt"
 
 mongo_client = pymongo.MongoClient("mongodb://localhost:27017/")
 
@@ -21,8 +21,8 @@ start_time = time.time()
 print("Inserindo os fluxos no banco de dados...")
 print("Arquivo:", file_name)
 print("Base de dados:", db.name)
-print("Coleção:", collection.name)
-print("Horário:", time.strftime("%H:%M:%S", time.localtime(start_time)))
+print("Colecao:", collection.name)
+print("Horario:", time.strftime("%H:%M:%S", time.localtime(start_time)))
 
 batch = []
 
@@ -34,13 +34,13 @@ with open(file_name, "r") as file:
         if not PERMITIR_IPV6 and fluxo.ipv6:
             continue
 
-        # Cria um dicionÃ¡rio com os dados do fluxo
+        # Cria um dicionario com os dados do fluxo
         fluxo_dict = fluxo.to_dict()
 
-        # Adiciona o dicionÃ¡rio ao lote
+        # Adiciona o dicionario ao lote
         batch.append(fluxo_dict)
 
-        # Insere o dicionÃ¡rio na colecao
+        # Insere o dicionario na colecao
         if len(batch) == BATCH_SIZE:
             collection.insert_many(batch)
             batch = []
@@ -53,7 +53,7 @@ with open(file_name, "r") as file:
 # Pega o tempo final
 final_time = time.time()
 
-# Calcula o tempo de execução
+# Calcula o tempo de execucao
 execution_time = final_time - start_time
 
-print(f"Tempo de execução: {execution_time} segundos")
+print(f"Tempo de execucao: {execution_time} segundos")
