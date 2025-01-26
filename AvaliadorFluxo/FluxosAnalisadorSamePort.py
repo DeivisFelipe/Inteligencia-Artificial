@@ -25,7 +25,7 @@ FLOWS_FILE = "AvaliadorFluxo/Saida/saida.txt"
 GRAPHS_DIR = "AvaliadorFluxo/Saida/Graficos"
 PATH_TSHARK = "C:/Program Files/Wireshark/tshark.exe"
 PATH_PCAP = 'Datasets/Pcaps/201904091200.pcap'
-SORTED_FLOWS_FILE = "AvaliadorFluxo/Saida/FluxosOrdenados.txt"
+SORTED_FLOWS_FILE = "../large-pcap-analyzer/caidateste.txt"
 
 # Plot
 HIST_BIN_SIZE = 10
@@ -49,7 +49,7 @@ MINIMUM_SCORE = 7
 MAXIMUM_SCORE = 10
 
 # Percent of flows that will be considered
-PERCENT_FLOWS = 0.33 # min: 0.0, max: 1.0
+PERCENT_FLOWS = 1 # min: 0.0, max: 1.0
 
 # Minimums save file
 MINIMUM_FLOWS_FILE = 10
@@ -60,7 +60,7 @@ MINIMUM_PREDICTION_FILE = 5
 MINIMUM_ACCURACY_FILE = 95
 
 # Booleans
-MAKE_EVALUATION_TXT = True
+MAKE_EVALUATION_TXT = False
 MAKE_EVALUATION_JSON = False
 MAKE_FLOWS = False
 MAKE_GRAPHS = True
