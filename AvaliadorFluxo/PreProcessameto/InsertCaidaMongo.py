@@ -6,13 +6,18 @@ from FluxoFile import FluxoFile
 PERMITIR_IPV6 = True
 BATCH_SIZE = 1000000
 
-file_name = "/home/deivis/Projetos/large-pcap-analyzer-2/caida01.txt"
+file_name = "./Datasets/Fluxos/CAIDA/caida01.txt"
 
 mongo_client = pymongo.MongoClient("mongodb://localhost:27017/")
 
 db = mongo_client["fluxos_database"] # Cria a base de dados "fluxos_database" se ela não existir
 
 collection = db["caida_collection"] # Cria a colecao "caida_collection" se ela não existir
+
+# Verifica se a colecao tem algum dado, se tiver mostra uma mensagem e cancela a exec
+if collection.count_documents({}) > 0:
+    print("A colecao ja possui dados, cancele a execucao se nao quiser sobrescrever os dados")
+    exit()
 
 # Pega o tempo inicial
 start_time = time.time()
@@ -57,3 +62,4 @@ final_time = time.time()
 execution_time = final_time - start_time
 
 print(f"Tempo de execucao: {execution_time} segundos")
+print(f"Tamanho da colecao: {collection.count_documents({})} documentos")
