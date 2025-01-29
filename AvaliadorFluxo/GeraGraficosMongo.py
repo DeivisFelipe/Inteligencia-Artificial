@@ -2,11 +2,18 @@ import matplotlib.pyplot as plt
 import pymongo
 import time
 
-PATH_GRAPHS = "AvaliadorFluxo/Saida/Graficos/AnaliseMawi"
-NAME = "MAWI MongoDB"
-NUMBER_BINS_HISTOGRAMA = 60
-DB_NAME = "fluxos_database"
-COLLECTION_NAME = "mawi_collection"
+if True:
+    PATH_GRAPHS = "AvaliadorFluxo/Saida/Graficos/AnaliseCaida"
+    NAME = "CAIDA MongoDB"
+    NUMBER_BINS_HISTOGRAMA = 60
+    DB_NAME = "fluxos_database"
+    COLLECTION_NAME = "caida_collection"
+else:
+    PATH_GRAPHS = "AvaliadorFluxo/Saida/Graficos/AnaliseMAWI"
+    NAME = "MAWI MongoDB"
+    NUMBER_BINS_HISTOGRAMA = 60
+    DB_NAME = "fluxos_database"
+    COLLECTION_NAME = "mawi_collection"
 
 def main():
     # Conecta ao MongoDB
@@ -14,7 +21,7 @@ def main():
     db = mongo_client[DB_NAME]
     collection = db[COLLECTION_NAME]
 
-    # Pega o maior e o menor tempo de duração e a maior e a menor quantidade de bytes usando queries
+    # Pega o maior e o menor tempo de duracao e a maior e a menor quantidade de bytes usando queries
     bigger_duration = collection.find_one(sort=[("duration", pymongo.DESCENDING)])["duration"]
     smaller_duration = collection.find_one(sort=[("duration", pymongo.ASCENDING)])["duration"]
     bigger_bytes = collection.find_one(sort=[("nbytes_total", pymongo.DESCENDING)])["nbytes_total"]
@@ -25,7 +32,7 @@ def main():
     print("Maior quantidade de bytes: ", bigger_bytes)
     print("Menor quantidade de bytes: ", smaller_bytes)
 
-    # Gera os intervalos de duração e bytes
+    # Gera os intervalos de duracao e bytes
     duration_interval = (bigger_duration - smaller_duration) / NUMBER_BINS_HISTOGRAMA
     duration_intervals = []
     for i in range(NUMBER_BINS_HISTOGRAMA):
@@ -52,13 +59,13 @@ def main():
     # # Número total de bytes
     # total_bytes = sum(bytesSoma)
     # print("Total de bytes: ", total_bytes)
-    # # Tamanho médio dos pacotes
+    # # Tamanho medio dos pacotes
     # tamanho_medio = total_bytes / total_pacotes
-    # print("Tamanho médio dos pacotes: ", tamanho_medio)
+    # print("Tamanho medio dos pacotes: ", tamanho_medio)
 
-# Gráficos
+# Graficos
 
-# Histograma de duração dos fluxos
+# Histograma de duracao dos fluxos
 def duration_histogram(collection, duration_intervals, flows_by_duration_counters, packets_by_duration_counters, total_bytes_by_duration_counters):
     print("*" * 50)
     print("Gerando histograma de duracao dos fluxos...")
@@ -70,7 +77,7 @@ def duration_histogram(collection, duration_intervals, flows_by_duration_counter
         flows_by_duration_counters[i] = collection.count_documents(query)
 
         # Conta a quantidade de pacotes e bytes
-        # Verifique se há resultado antes de acessar
+        # Verifique se ha resultado antes de acessar
         result = collection.aggregate([
             {"$match": query},
             {"$group": {"_id": None, "total_packets": {"$sum": "$npackets_total"}, "total_bytes": {"$sum": "$nbytes_total"}}}
@@ -83,20 +90,20 @@ def duration_histogram(collection, duration_intervals, flows_by_duration_counter
             packets_by_duration_counters[i] = 0
             total_bytes_by_duration_counters[i] = 0
 
-    # Gráfico de linha
+    # Grafico de linha
     plt.figure(figsize=(10, 5))
     plt.plot(duration_intervals, flows_by_duration_counters)
-    plt.xlabel('Intervalos de duração')
+    plt.xlabel('Intervalos de duracao')
     plt.ylabel('Quantidade de fluxos')
-    plt.title('Quantidade de fluxos por duração - ' + NAME)
+    plt.title('Quantidade de fluxos por duracao - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/NumeroDeFluxosPorDuracaoLinha.png")
 
     # Gŕafico de barras
     plt.figure(figsize=(10, 5))
     plt.bar(duration_intervals, flows_by_duration_counters, color="blue", width=(duration_intervals[1] - duration_intervals[0]) * 0.8)
-    plt.xlabel('Intervalos de duração')
+    plt.xlabel('Intervalos de duracao')
     plt.ylabel('Quantidade de fluxos')
-    plt.title('Quantidade de fluxos por duração - ' + NAME)
+    plt.title('Quantidade de fluxos por duracao - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/NumeroDeFluxosPorDuracaoBarra.png")
     print("Quantidade de fluxos por duracao gerado com sucesso!")
 
@@ -110,7 +117,7 @@ def bytes_histogram(collection, bytes_intervals, flows_by_bytes_counters):
             query = {"nbytes_total": {"$gte": bytes_intervals[i], "$lt": bytes_intervals[i + 1]}}
         flows_by_bytes_counters[i] = collection.count_documents(query)
 
-    # Gráfico de linha
+    # Grafico de linha
     plt.figure(figsize=(10, 5))
     plt.plot(bytes_intervals, flows_by_bytes_counters)
     plt.yscale('log')
@@ -119,7 +126,7 @@ def bytes_histogram(collection, bytes_intervals, flows_by_bytes_counters):
     plt.title('Quantidade de fluxos por bytes - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/NumeroFluxosPorBytesLinha.png")
 
-    # Gráfico de barra
+    # Grafico de barra
     plt.figure(figsize=(10, 5))
     plt.bar(bytes_intervals, flows_by_bytes_counters, color="blue", width=(bytes_intervals[1] - bytes_intervals[0]) * 0.8)
     plt.yscale('log')
@@ -139,30 +146,30 @@ def average_packet_size_by_duration_histogram(duration_intervals, packets_by_dur
         else:
             tamanho_medio.append(0)
 
-    # Gráfico de linha
+    # Grafico de linha
     plt.clf()
     plt.plot(duration_intervals, tamanho_medio) 
-    plt.xlabel('Intervalos de duração')
-    plt.ylabel('Tamanho médio dos pacotes')
-    plt.title('Tamanho médio dos pacotes em relação a duração - ' + NAME)
+    plt.xlabel('Intervalos de duracao')
+    plt.ylabel('Tamanho medio dos pacotes')
+    plt.title('Tamanho medio dos pacotes em relacao a duracao - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/TamanhoMedioPacotesPorDuracapLinha.png")
 
     # Gŕafico de barras
     plt.clf()
     plt.bar(duration_intervals, tamanho_medio, color="blue", width=(duration_intervals[1] - duration_intervals[0]) * 0.8)
-    plt.xlabel('Intervalos de duração')
-    plt.ylabel('Tamanho médio dos pacotes')
-    plt.title('Tamanho médio dos pacotes em relação a duração - ' + NAME)
+    plt.xlabel('Intervalos de duracao')
+    plt.ylabel('Tamanho medio dos pacotes')
+    plt.title('Tamanho medio dos pacotes em relacao a duracao - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/TamanhoMedioPacotesPorDuracaoBarra.png")
     print("Histograma de tamanho medio dos pacotes por duracao gerado com sucesso!")
 
 if __name__ == '__main__':
     start_time = time.time()
-    print("Iniciando a geração dos gráficos...")
-    print("Horário:", time.strftime("%H:%M:%S", time.localtime(start_time)))
+    print("Iniciando a geracao dos graficos...")
+    print("Horario:", time.strftime("%H:%M:%S", time.localtime(start_time)))
     print("=" * 50)
     main()
     print("=" * 50)
     end_time = time.time()
     execution_time = end_time - start_time
-    print("Tempo de execução: ", execution_time, " segundos")
+    print("Tempo de execucao: ", execution_time, " segundos")
