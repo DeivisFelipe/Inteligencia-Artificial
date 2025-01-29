@@ -13,7 +13,7 @@ DATA_BASE_NAME = "fluxos_database"
 COLLECTION_NAME = "caida_collection"
 TIMEOUT_LIMIT = 20 * 1000  # 20 segundos em milissegundos
 OFFSET = 60 * 1000         # 60 segundos em milissegundos
-BATCH_SIZE = 50000
+BATCH_SIZE = 1000000
 
 # Conecta ao MongoDB
 mongo_client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -81,7 +81,7 @@ for file_name in FILES_FLUXOS:
                     new_duration = (actual_offset - result['start']) + (flow.start + flow.duration)
                     bulk_operations.append(
                         pymongo.UpdateOne(
-                            query,
+                            {"_id": result["_id"]},  # Atualiza diretamente pelo ID
                             {"$set": {"duration": new_duration}}
                         )
                     )
@@ -104,18 +104,18 @@ for file_name in FILES_FLUXOS:
                 time_to_insert = time.time() - start_time
                 print(f"Fluxos inseridos: {BATCH_SIZE} - Tempo: {time_to_insert} segundos")
 
-    # Executa operacoes em lote
-    if bulk_operations:
-        collection.bulk_write(bulk_operations)
+        # Executa operacoes em lote
+        if bulk_operations:
+            collection.bulk_write(bulk_operations)
 
-    # Calcula o tempo de execucoes
-    execution_time = time.time() - start_time
-    print(f"Tempo de execucoes: {execution_time} segundos")
+        # Calcula o tempo de execucoes
+        execution_time = time.time() - start_time
+        print(f"Tempo de execucoes: {execution_time} segundos")
 
-    # Exibe estatisticas
-    print("Total de fluxos:", total_inserted + total_updated)
-    print("Total de fluxos inseridos:", total_inserted)
-    print("Total de fluxos atualizados:", total_updated)
-    print("Total de fluxos com tempo negativo:", time_to_end_less_than_zero)
+        # Exibe estatisticas
+        print("Total de fluxos:", total_inserted + total_updated)
+        print("Total de fluxos inseridos:", total_inserted)
+        print("Total de fluxos atualizados:", total_updated)
+        print("Total de fluxos com tempo negativo:", time_to_end_less_than_zero)
 
-    actual_offset += OFFSET
+        actual_offset += OFFSET
