@@ -7,13 +7,15 @@ FILES_FLUXOS = [
     './Datasets/Fluxos/CAIDA/caida02.txt',
     './Datasets/Fluxos/CAIDA/caida03.txt',
     './Datasets/Fluxos/CAIDA/caida04.txt',
+    './Datasets/Fluxos/CAIDA/caida05.txt',
+    './Datasets/Fluxos/CAIDA/caida06.txt',
 ]
 
 DATA_BASE_NAME = "fluxos_database"
 COLLECTION_NAME = "caida_collection"
 TIMEOUT_LIMIT = 20 * 1000  # 20 segundos em milissegundos
 OFFSET = 60 * 1000         # 60 segundos em milissegundos
-BATCH_SIZE = 1000000
+BATCH_SIZE = 500000
 
 # Conecta ao MongoDB
 mongo_client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -119,3 +121,8 @@ for file_name in FILES_FLUXOS:
         print("Total de fluxos com tempo negativo:", time_to_end_less_than_zero)
 
         actual_offset += OFFSET
+
+
+# Executa o código GeraGraficosMongo.py em seguida em python3
+import os
+os.system("python -u ./AvaliadorFluxo/GeraGraficosMongo.py") 
