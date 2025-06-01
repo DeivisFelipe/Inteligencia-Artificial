@@ -9,12 +9,20 @@ FILES_FLUXOS = [
     './Datasets/Fluxos/CAIDA/caida04.txt',
     './Datasets/Fluxos/CAIDA/caida05.txt',
     './Datasets/Fluxos/CAIDA/caida06.txt',
+    './Datasets/Fluxos/CAIDA/caida07.txt',
+    './Datasets/Fluxos/CAIDA/caida08.txt',
+    './Datasets/Fluxos/CAIDA/caida09.txt',
+    './Datasets/Fluxos/CAIDA/caida10.txt',
+    './Datasets/Fluxos/CAIDA/caida11.txt',
+    './Datasets/Fluxos/CAIDA/caida12.txt',
+    './Datasets/Fluxos/CAIDA/caida13.txt',
 ]
 
+FLUXOS_INITIAL = 2
 DATA_BASE_NAME = "fluxos_database"
 COLLECTION_NAME = "caida_collection"
 TIMEOUT_LIMIT = 20 * 1000  # 20 segundos em milissegundos
-OFFSET = 60 * 1000         # 60 segundos em milissegundos
+OFFSET = 60 * 1000 * (FLUXOS_INITIAL - 1)        # 60 segundos em milissegundos
 BATCH_SIZE = 500000
 
 # Conecta ao MongoDB
