@@ -1,136 +1,151 @@
 import pymongo
 import time
+import os
+import subprocess
 from FluxoFile import FluxoFile
+from datetime import datetime
 
-# Hiperparametros
+# Lista de arquivos a serem processados (caida01 já está no banco)
 FILES_FLUXOS = [
-    './Datasets/Fluxos/CAIDA/caida02.txt',
-    './Datasets/Fluxos/CAIDA/caida03.txt',
-    './Datasets/Fluxos/CAIDA/caida04.txt',
-    './Datasets/Fluxos/CAIDA/caida05.txt',
-    './Datasets/Fluxos/CAIDA/caida06.txt',
-    './Datasets/Fluxos/CAIDA/caida07.txt',
-    './Datasets/Fluxos/CAIDA/caida08.txt',
-    './Datasets/Fluxos/CAIDA/caida09.txt',
-    './Datasets/Fluxos/CAIDA/caida10.txt',
-    './Datasets/Fluxos/CAIDA/caida11.txt',
-    './Datasets/Fluxos/CAIDA/caida12.txt',
-    './Datasets/Fluxos/CAIDA/caida13.txt',
+    'caida02.txt', 'caida03.txt', 'caida04.txt', 'caida05.txt', 'caida06.txt',
+    'caida07.txt', 'caida08.txt', 'caida09.txt', 'caida10.txt', 'caida11.txt',
+    'caida12.txt', 'caida13.txt', 'caida14.txt', 'caida15.txt', 'caida16.txt',
 ]
 
-FLUXOS_INITIAL = 2
+# Timestamps reais (em segundos)
+PCAP_TIMESTAMPS = {
+    "caida01.txt": (1547729950.467105000, 1547729999.999996000),  # Já no banco
+    "caida02.txt": (1547730000.000000000, 1547730059.999991000),
+    "caida03.txt": (1547730060.000000000, 1547730119.999998000),
+    "caida04.txt": (1547730120.000004000, 1547730179.999998000),
+    "caida05.txt": (1547730180.000004000, 1547730239.999999000),
+    "caida06.txt": (1547730240.000001000, 1547730299.999999000),
+    "caida07.txt": (1547730300.000001000, 1547730359.999999000),
+    "caida08.txt": (1547730360.000000000, 1547730419.999998000),
+    "caida09.txt": (1547730420.000000000, 1547730479.999999000),
+    "caida10.txt": (1547730480.000000000, 1547730539.999998000),
+    "caida11.txt": (1547730540.000002000, 1547730599.999993000),
+    "caida12.txt": (1547730600.000003000, 1547730659.999999000),
+    "caida13.txt": (1547730660.000000000, 1547730719.999997000),
+    "caida14.txt": (1547730707.672897000, 1547730719.999997000),
+    "caida15.txt": (1547730720.000004000, 1547730779.999998000),
+    "caida16.txt": (1547730780.000004000, 1547730839.999999000),
+}
+
+# Conversão para ms
+def seconds_to_millis(ts):
+    return int(ts * 1000)
+
+# Base para cálculo de offset real
+base_ts = PCAP_TIMESTAMPS["caida01.txt"][0]
+REAL_OFFSETS = {
+    fname: seconds_to_millis(start_ts - base_ts)
+    for fname, (start_ts, _) in PCAP_TIMESTAMPS.items()
+}
+
+# Parâmetros
 DATA_BASE_NAME = "fluxos_database"
 COLLECTION_NAME = "caida_collection"
-TIMEOUT_LIMIT = 20 * 1000  # 20 segundos em milissegundos
-OFFSET = 60 * 1000 * (FLUXOS_INITIAL - 1)        # 60 segundos em milissegundos
+TIMEOUT_LIMIT = 20 * 1000  # 20s em ms
 BATCH_SIZE = 500000
 
+# Log formatado
+def log(msg):
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+
+# Atualiza ou insere novo fluxo
+def atualizar_ou_inserir_fluxo(flow, result, offset):
+    flow_start_abs = offset + flow.start
+    flow_end_abs = flow_start_abs + flow.duration
+    final = result['start'] + result['duration']
+    time_to_end = flow_start_abs - final
+
+    if time_to_end > TIMEOUT_LIMIT:
+        return "insert", None
+    else:
+        novo_fim = max(final, flow_end_abs)
+        new_duration = novo_fim - result['start']
+        return "update", new_duration
+
 # Conecta ao MongoDB
-mongo_client = pymongo.MongoClient("mongodb://localhost:27017/")
-db = mongo_client[DATA_BASE_NAME]
-collection = db[COLLECTION_NAME]
+with pymongo.MongoClient("mongodb://localhost:27017/") as mongo_client:
+    db = mongo_client[DATA_BASE_NAME]
+    collection = db[COLLECTION_NAME]
 
-# Cria indices
-collection.create_index([
-    ("src", pymongo.ASCENDING),
-    ("src_port", pymongo.ASCENDING),
-    ("dst", pymongo.ASCENDING),
-    ("dst_port", pymongo.ASCENDING),
-    ("start", pymongo.DESCENDING),
-])
+    # Índices
+    collection.create_index([
+        ("src", pymongo.ASCENDING),
+        ("src_port", pymongo.ASCENDING),
+        ("dst", pymongo.ASCENDING),
+        ("dst_port", pymongo.ASCENDING),
+        ("start", pymongo.DESCENDING),
+    ])
 
-actual_offset = OFFSET
+    log(f"Conectado à base: {db.name}, coleção: {collection.name}")
 
-print("Base de dados:", db.name)
-print("Colecao:", collection.name)
+    for file_name in FILES_FLUXOS:
+        full_path = f"./Datasets/Fluxos/CAIDA/{file_name}"
+        if not os.path.isfile(full_path):
+            log(f"Arquivo não encontrado: {full_path}, pulando...")
+            continue
 
-# Percorre os arquivos de fluxos
-for file_name in FILES_FLUXOS:
-    # Tempo inicial
-    start_time = time.time()
-    print("Inserindo os fluxos no banco de dados...")
-    print("Arquivo:", file_name)
-    print("Horario:", time.strftime("%H:%M:%S", time.localtime(start_time)))
+        actual_offset = REAL_OFFSETS[file_name]
+        log(f"\nProcessando {file_name} com offset real de {actual_offset}ms")
+        start_time = time.time()
 
-    # Prepara operacoes em lote
-    bulk_operations = []
+        total_inserted = 0
+        total_updated = 0
+        bulk_operations = []
 
-    # Estatisticas
-    total_inserted = 0
-    total_updated = 0
-    time_to_end_less_than_zero = 0
+        with open(full_path, "r") as file:
+            for line in file:
+                try:
+                    flow = FluxoFile(line, True)
+                except Exception as e:
+                    log(f"Erro ao processar linha: {e}")
+                    continue
 
-    # Carrega os fluxos em memoria
-    with open(file_name, "r") as file:
-        for line in file:
-            flow = FluxoFile(line, True)
-            query = {
-                "src": flow.src,
-                "src_port": flow.src_port,
-                "dst": flow.dst,
-                "dst_port": flow.dst_port,
-            }
+                query = {
+                    "src": flow.src,
+                    "src_port": flow.src_port,
+                    "dst": flow.dst,
+                    "dst_port": flow.dst_port,
+                }
 
-            # Busca o fluxo mais recente com os mesmos parametros
-            result = collection.find_one(query, sort=[("start", pymongo.DESCENDING)])
+                result = collection.find_one(query, sort=[("start", pymongo.DESCENDING)])
 
-            insert = False  # Controle de insercoes
-
-            if result:
-                final = result['start'] + result['duration']
-                time_to_end = (actual_offset + flow.start) - final
-
-                if time_to_end < 0:
-                    insert = True
-                    time_to_end_less_than_zero += 1
-                elif time_to_end > TIMEOUT_LIMIT:
-                    insert = True
-                else:
-                    total_updated += 1
-                    # Se nao deve inserir, atualiza a duracao do fluxo existente
-                    new_duration = (actual_offset - result['start']) + (flow.start + flow.duration)
-                    bulk_operations.append(
-                        pymongo.UpdateOne(
-                            {"_id": result["_id"]},  # Atualiza diretamente pelo ID
-                            {"$set": {"duration": new_duration}}
+                if result:
+                    action, new_duration = atualizar_ou_inserir_fluxo(flow, result, actual_offset)
+                    if action == "update":
+                        total_updated += 1
+                        bulk_operations.append(
+                            pymongo.UpdateOne(
+                                {"_id": result["_id"]},
+                                {"$set": {"duration": new_duration}}
+                            )
                         )
-                    )
-            else:
-                # Nao encontrou fluxo correspondente, deve inserir o novo fluxo
-                insert = True
+                    else:
+                        total_inserted += 1
+                        flow.start += actual_offset
+                        bulk_operations.append(pymongo.InsertOne(flow.to_dict()))
+                else:
+                    total_inserted += 1
+                    flow.start += actual_offset
+                    bulk_operations.append(pymongo.InsertOne(flow.to_dict()))
 
-            if insert:
-                total_inserted += 1
-                # Atualiza o tempo de inicio do fluxo
-                flow.start += actual_offset
-                bulk_operations.append(
-                    pymongo.InsertOne(flow.to_dict())
-                )
+                if len(bulk_operations) >= BATCH_SIZE:
+                    collection.bulk_write(bulk_operations)
+                    bulk_operations = []
+                    log(f"{BATCH_SIZE} operações enviadas ao MongoDB")
 
-            if len(bulk_operations) == BATCH_SIZE:
+            if bulk_operations:
                 collection.bulk_write(bulk_operations)
-                bulk_operations = []
-                # Tempo em segundos para inserir BATCH_SIZE fluxos
-                time_to_insert = time.time() - start_time
-                print(f"Fluxos inseridos: {BATCH_SIZE} - Tempo: {time_to_insert} segundos")
 
-        # Executa operacoes em lote
-        if bulk_operations:
-            collection.bulk_write(bulk_operations)
+        duration = time.time() - start_time
+        log(f"Arquivo {file_name} processado em {duration:.2f}s")
+        log(f"→ Fluxos inseridos: {total_inserted}")
+        log(f"→ Fluxos atualizados: {total_updated}")
 
-        # Calcula o tempo de execucoes
-        execution_time = time.time() - start_time
-        print(f"Tempo de execucoes: {execution_time} segundos")
-
-        # Exibe estatisticas
-        print("Total de fluxos:", total_inserted + total_updated)
-        print("Total de fluxos inseridos:", total_inserted)
-        print("Total de fluxos atualizados:", total_updated)
-        print("Total de fluxos com tempo negativo:", time_to_end_less_than_zero)
-
-        actual_offset += OFFSET
-
-
-# Executa o código GeraGraficosMongo.py em seguida em python3
-import os
-os.system("python -u ./AvaliadorFluxo/GeraGraficosMongo.py") 
+# Gera gráficos
+log("Gerando gráficos com GeraGraficosMongo.py...")
+subprocess.run(["python3", "-u", "./AvaliadorFluxo/GeraGraficosMongo.py"])
