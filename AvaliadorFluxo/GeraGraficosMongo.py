@@ -27,8 +27,8 @@ def main():
     bigger_bytes = collection.find_one(sort=[("nbytes_total", pymongo.DESCENDING)])["nbytes_total"]
     smaller_bytes = collection.find_one(sort=[("nbytes_total", pymongo.ASCENDING)])["nbytes_total"]
 
-    print("Maior duracao: ", bigger_duration)
-    print("Menor duracao: ", smaller_duration)
+    print("Maior duração: ", bigger_duration)
+    print("Menor duração: ", smaller_duration)
     print("Maior quantidade de bytes: ", bigger_bytes)
     print("Menor quantidade de bytes: ", smaller_bytes)
 
@@ -68,7 +68,7 @@ def main():
 # Histograma de duracao dos fluxos
 def duration_histogram(collection, duration_intervals, flows_by_duration_counters, packets_by_duration_counters, total_bytes_by_duration_counters):
     print("*" * 50)
-    print("Gerando histograma de duracao dos fluxos...")
+    print("Gerando histograma de duração dos fluxos...")
     for i in range(NUMBER_BINS_HISTOGRAMA):
         if i == NUMBER_BINS_HISTOGRAMA - 1:
             query = {"duration": {"$gte": duration_intervals[i]}}
@@ -93,17 +93,17 @@ def duration_histogram(collection, duration_intervals, flows_by_duration_counter
     # Grafico de linha
     plt.figure(figsize=(10, 5))
     plt.plot(duration_intervals, flows_by_duration_counters)
-    plt.xlabel('Intervalos de duracao')
+    plt.xlabel('Intervalos de duração')
     plt.ylabel('Quantidade de fluxos')
-    plt.title('Quantidade de fluxos por duracao - ' + NAME)
+    plt.title('Quantidade de fluxos por duração - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/NumeroDeFluxosPorDuracaoLinha.png")
 
     # Gŕafico de barras
     plt.figure(figsize=(10, 5))
     plt.bar(duration_intervals, flows_by_duration_counters, color="blue", width=(duration_intervals[1] - duration_intervals[0]) * 0.8)
-    plt.xlabel('Intervalos de duracao')
+    plt.xlabel('Intervalos de duração')
     plt.ylabel('Quantidade de fluxos')
-    plt.title('Quantidade de fluxos por duracao - ' + NAME)
+    plt.title('Quantidade de fluxos por duração - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/NumeroDeFluxosPorDuracaoBarra.png")
     print("Quantidade de fluxos por duracao gerado com sucesso!")
 
@@ -138,7 +138,7 @@ def bytes_histogram(collection, bytes_intervals, flows_by_bytes_counters):
 
 def average_packet_size_by_duration_histogram(duration_intervals, packets_by_duration_counters, total_bytes_by_duration_counters):
     print("*" * 50)
-    print("Gerando histograma de tamanho medio dos pacotes por duracao...")
+    print("Gerando histograma de tamanho médio dos pacotes por duração...")
     tamanho_medio = []
     for i in range(NUMBER_BINS_HISTOGRAMA):
         if packets_by_duration_counters[i] != 0:
@@ -149,27 +149,27 @@ def average_packet_size_by_duration_histogram(duration_intervals, packets_by_dur
     # Grafico de linha
     plt.clf()
     plt.plot(duration_intervals, tamanho_medio) 
-    plt.xlabel('Intervalos de duracao')
-    plt.ylabel('Tamanho medio dos pacotes')
-    plt.title('Tamanho medio dos pacotes em relacao a duracao - ' + NAME)
+    plt.xlabel('Intervalos de duraçção')
+    plt.ylabel('Tamanho médio dos pacotes')
+    plt.title('Tamanho médio dos pacotes em relacao a duração - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/TamanhoMedioPacotesPorDuracapLinha.png")
 
     # Gŕafico de barras
     plt.clf()
     plt.bar(duration_intervals, tamanho_medio, color="blue", width=(duration_intervals[1] - duration_intervals[0]) * 0.8)
-    plt.xlabel('Intervalos de duracao')
-    plt.ylabel('Tamanho medio dos pacotes')
-    plt.title('Tamanho medio dos pacotes em relacao a duracao - ' + NAME)
+    plt.xlabel('Intervalos de duração')
+    plt.ylabel('Tamanho médio dos pacotes')
+    plt.title('Tamanho médio dos pacotes em relacao a duração - ' + NAME)
     plt.savefig(PATH_GRAPHS + "/TamanhoMedioPacotesPorDuracaoBarra.png")
-    print("Histograma de tamanho medio dos pacotes por duracao gerado com sucesso!")
+    print("Histograma de tamanho médio dos pacotes por duração gerado com sucesso!")
 
 if __name__ == '__main__':
     start_time = time.time()
-    print("Iniciando a geracao dos graficos...")
-    print("Horario:", time.strftime("%H:%M:%S", time.localtime(start_time)))
+    print("Iniciando a geração dos graficos...")
+    print("Horário:", time.strftime("%H:%M:%S", time.localtime(start_time)))
     print("=" * 50)
     main()
     print("=" * 50)
     end_time = time.time()
     execution_time = end_time - start_time
-    print("Tempo de execucao: ", execution_time, " segundos")
+    print("Tempo de execução: ", execution_time, " segundos")

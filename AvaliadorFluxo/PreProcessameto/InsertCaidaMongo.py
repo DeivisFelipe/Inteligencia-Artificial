@@ -12,12 +12,21 @@ mongo_client = pymongo.MongoClient("mongodb://localhost:27017/")
 
 db = mongo_client["fluxos_database"] # Cria a base de dados "fluxos_database" se ela não existir
 
-collection = db["caida_collection"] # Cria a colecao "caida_collection" se ela não existir
+collection = db["caida_collection"] # Cria a coleção "caida_collection" se ela não existir
 
-# Verifica se a colecao tem algum dado, se tiver mostra uma mensagem e cancela a exec
+# Verifica se a coleção tem algum dado, se tiver mostra uma mensagem e cancela a exec
 if collection.count_documents({}) > 0:
-    print("A colecao ja possui dados, cancele a execucao se nao quiser sobrescrever os dados")
-    exit()
+    print("A coleção ja possui dados")
+
+    # Pergunta se deseja limpar a coleção
+    resposta = input("Deseja limpar a coleção? (s/n): ").strip().lower()
+    if resposta == 's':
+        collection.drop()  # Limpa a coleção
+        print("Coleção limpa.")
+    else:
+        print("Execução cancelada.")
+        mongo_client.close()
+        exit()
 
 # Pega o tempo inicial
 start_time = time.time()
@@ -26,8 +35,8 @@ start_time = time.time()
 print("Inserindo os fluxos no banco de dados...")
 print("Arquivo:", file_name)
 print("Base de dados:", db.name)
-print("Colecao:", collection.name)
-print("Horario:", time.strftime("%H:%M:%S", time.localtime(start_time)))
+print("Coleção:", collection.name)
+print("Horário:", time.strftime("%H:%M:%S", time.localtime(start_time)))
 
 batch = []
 
@@ -39,13 +48,13 @@ with open(file_name, "r") as file:
         if not PERMITIR_IPV6 and fluxo.ipv6:
             continue
 
-        # Cria um dicionario com os dados do fluxo
+        # Cria um dicionário com os dados do fluxo
         fluxo_dict = fluxo.to_dict()
 
-        # Adiciona o dicionario ao lote
+        # Adiciona o dicionário ao lote
         batch.append(fluxo_dict)
 
-        # Insere o dicionario na colecao
+        # Insere o dicionário na colecao
         if len(batch) == BATCH_SIZE:
             collection.insert_many(batch)
             batch = []
@@ -58,8 +67,8 @@ with open(file_name, "r") as file:
 # Pega o tempo final
 final_time = time.time()
 
-# Calcula o tempo de execucao
+# Calcula o tempo de execução
 execution_time = final_time - start_time
 
-print(f"Tempo de execucao: {execution_time} segundos")
-print(f"Tamanho da colecao: {collection.count_documents({})} documentos")
+print(f"Tempo de execução: {execution_time} segundos")
+print(f"Tamanho da coleção: {collection.count_documents({})} documentos")
